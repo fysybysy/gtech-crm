@@ -12,7 +12,7 @@ function DetailItem({ label, children }) {
   )
 }
 
-export default function ClientDetail({ open, onClose, client, onEdit, onDelete }) {
+export default function ClientDetail({ open, onClose, client, onEdit, onDelete, onAddToDayPlan, dayPlanIds = [] }) {
   if (!client) return null
   const notes = client.notes || []
 
@@ -64,10 +64,22 @@ export default function ClientDetail({ open, onClose, client, onEdit, onDelete }
         )}
       </div>
 
-      <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end', marginTop: 28, borderTop: '1px solid var(--border)', paddingTop: 24 }}>
+      <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end', marginTop: 28, borderTop: '1px solid var(--border)', paddingTop: 24, flexWrap: 'wrap' }}>
         <button onClick={() => onDelete(client.id)} style={{ padding: '6px 14px', borderRadius: 8, border: '1px solid var(--danger)', background: 'transparent', color: 'var(--danger)', fontFamily: 'var(--sans)', fontSize: 12, fontWeight: 700, cursor: 'pointer', marginRight: 'auto' }}>
           Usuń klienta
         </button>
+        {onAddToDayPlan && (() => {
+          const inPlan = dayPlanIds.includes(client.id)
+          return (
+            <button
+              onClick={() => { onAddToDayPlan(client); if (!inPlan) onClose() }}
+              disabled={inPlan}
+              style={{ padding: '12px 20px', borderRadius: 8, border: `1px solid ${inPlan ? 'var(--border)' : 'var(--accent2)'}`, background: inPlan ? 'var(--surface2)' : 'rgba(92,170,255,0.1)', color: inPlan ? 'var(--muted)' : 'var(--accent2)', fontFamily: 'var(--sans)', fontSize: 14, fontWeight: 700, cursor: inPlan ? 'default' : 'pointer' }}
+            >
+              {inPlan ? '✓ W planie dnia' : '📅 Dodaj do planu dnia'}
+            </button>
+          )
+        })()}
         <button onClick={onClose} style={{ padding: '12px 24px', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--surface2)', color: 'var(--text)', fontFamily: 'var(--sans)', fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>
           Zamknij
         </button>

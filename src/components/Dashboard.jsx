@@ -12,13 +12,12 @@ function StatCard({ label, value, color }) {
   )
 }
 
-export default function Dashboard({ clients, onMeetingSave, onClientClick }) {
+export default function Dashboard({ clients, onMeetingSave, onClientClick, dayPlan, setDayPlan }) {
   return (
     <div style={{ padding: 40 }}>
       <div style={{ fontSize: 32, fontWeight: 800, marginBottom: 8, letterSpacing: -1 }}>Dobry dzień 👋</div>
       <div style={{ color: 'var(--muted)', fontSize: 14, marginBottom: 32, fontFamily: 'var(--mono)' }}>// Panel główny — zarządzanie klientami i spotkaniami</div>
 
-      {/* Stats */}
       <div style={{ display: 'flex', gap: 16, marginBottom: 36, flexWrap: 'wrap' }}>
         <StatCard label="Wszyscy klienci" value={clients.length} color="var(--accent)" />
         <StatCard label="1 Wizyta" value={clients.filter(c => c.stage === '1 Wizyta').length} color="var(--accent2)" />
@@ -26,13 +25,11 @@ export default function Dashboard({ clients, onMeetingSave, onClientClick }) {
         <StatCard label="Aktywni klienci" value={clients.filter(c => c.stage === 'Klient').length} color="var(--accent)" />
       </div>
 
-      {/* Main panels row */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24, maxWidth: 1100 }}>
         <MeetingPanel clients={clients} onSave={onMeetingSave} />
-        <DayPlanner clients={clients} onClientClick={onClientClick} />
+        <DayPlanner clients={clients} onClientClick={onClientClick} dayPlan={dayPlan} setDayPlan={setDayPlan} />
       </div>
 
-      {/* Alert panels row */}
       <AlertPanels clients={clients} onClientClick={onClientClick} />
     </div>
   )
