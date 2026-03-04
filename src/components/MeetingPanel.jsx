@@ -17,7 +17,10 @@ export default function MeetingPanel({ clients, onSave }) {
   const dropRef = useRef(null)
 
   const filtered = search.trim()
-    ? clients.filter(c => c.name.toLowerCase().includes(search.toLowerCase()))
+    ? clients.filter(c =>
+        c.name.toLowerCase().includes(search.toLowerCase()) ||
+        (c.address || '').toLowerCase().includes(search.toLowerCase())
+      )
     : clients
 
   useEffect(() => {
@@ -68,7 +71,7 @@ export default function MeetingPanel({ clients, onSave }) {
               value={search}
               onChange={e => { setSearch(e.target.value); setDropOpen(true); if (!e.target.value) setSelected(null) }}
               onFocus={() => setDropOpen(true)}
-              placeholder="Wpisz nazwę klienta..."
+              placeholder="Wpisz nazwę lub adres klienta..."
               autoComplete="off"
             />
           </div>
@@ -78,11 +81,14 @@ export default function MeetingPanel({ clients, onSave }) {
                 <div
                   key={c.id}
                   onClick={() => pick(c)}
-                  style={{ padding: '12px 16px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: 14, background: selected?.id === c.id ? 'rgba(212,255,92,0.08)' : 'transparent', transition: 'background 0.15s' }}
+                  style={{ padding: '10px 16px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: 14, background: selected?.id === c.id ? 'rgba(212,255,92,0.08)' : 'transparent', transition: 'background 0.15s', borderBottom: '1px solid var(--border)' }}
                   onMouseEnter={e => e.currentTarget.style.background = 'var(--border)'}
                   onMouseLeave={e => e.currentTarget.style.background = selected?.id === c.id ? 'rgba(212,255,92,0.08)' : 'transparent'}
                 >
-                  <span style={{ color: selected?.id === c.id ? 'var(--accent)' : 'inherit' }}>{c.name}</span>
+                  <div style={{ minWidth: 0 }}>
+                    <div style={{ color: selected?.id === c.id ? 'var(--accent)' : 'inherit', fontWeight: 600 }}>{c.name}</div>
+                    {c.address && <div style={{ fontSize: 11, color: 'var(--muted)', fontFamily: 'var(--mono)', marginTop: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{c.address}</div>}
+                  </div>
                   <StageBadge stage={c.stage} />
                 </div>
               ))}

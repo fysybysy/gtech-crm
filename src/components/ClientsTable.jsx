@@ -29,7 +29,10 @@ export default function ClientsTable({ clients, loading, onRowClick, onEdit, onA
 
   const filtered = useMemo(() => {
     let list = clients
-    if (search.trim()) list = list.filter(c => c.name.toLowerCase().includes(search.toLowerCase()))
+    if (search.trim()) list = list.filter(c =>
+      c.name.toLowerCase().includes(search.toLowerCase()) ||
+      (c.address || '').toLowerCase().includes(search.toLowerCase())
+    )
     if (stageFilter) list = list.filter(c => c.stage === stageFilter)
     return [...list].sort((a, b) => {
       let av = a[sortKey] || '', bv = b[sortKey] || ''
@@ -59,7 +62,7 @@ export default function ClientsTable({ clients, loading, onRowClick, onEdit, onA
             style={{ ...inp, width: '100%', paddingLeft: 44 }}
             value={search}
             onChange={e => setSearch(e.target.value)}
-            placeholder="Szukaj po nazwie..."
+            placeholder="Szukaj po nazwie lub adresie..."
           />
         </div>
         <select
