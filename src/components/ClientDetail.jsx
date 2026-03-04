@@ -12,9 +12,19 @@ function DetailItem({ label, children }) {
   )
 }
 
-export default function ClientDetail({ open, onClose, client, onEdit, onDelete, onAddToDayPlan, dayPlanIds = [] }) {
+export default function ClientDetail({ open, onClose, client, onEdit, onDelete, onAddToDayPlan, dayPlanIds }) {
   if (!client) return null
+
+  const ids = Array.isArray(dayPlanIds) ? dayPlanIds : []
+  const inPlan = ids.includes(client.id)
   const notes = client.notes || []
+
+  const handleAddToPlan = () => {
+    if (onAddToDayPlan) {
+      onAddToDayPlan(client)
+      onClose()
+    }
+  }
 
   return (
     <Modal open={open} onClose={onClose} maxWidth={780}>
@@ -32,7 +42,9 @@ export default function ClientDetail({ open, onClose, client, onEdit, onDelete, 
           <span style={{ color: 'var(--accent)', fontFamily: 'var(--mono)' }}>{client.chance || 0}%</span>
         </DetailItem>
         <DetailItem label="Próbka">
-          {client.sample && <span style={{ fontSize: 13, fontWeight: 400 }}>{client.sample}</span>}
+          {client.sample
+            ? <span style={{ fontSize: 13, fontWeight: 400 }}>{client.sample}</span>
+            : null}
         </DetailItem>
         <DetailItem label="Ostatnia wizyta">{formatDate(client.lastVisit)}</DetailItem>
         <DetailItem label="Ostatni kontakt">{formatDate(client.lastContact)}</DetailItem>
@@ -64,26 +76,40 @@ export default function ClientDetail({ open, onClose, client, onEdit, onDelete, 
         )}
       </div>
 
-      <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end', marginTop: 28, borderTop: '1px solid var(--border)', paddingTop: 24, flexWrap: 'wrap' }}>
-        <button onClick={() => onDelete(client.id)} style={{ padding: '6px 14px', borderRadius: 8, border: '1px solid var(--danger)', background: 'transparent', color: 'var(--danger)', fontFamily: 'var(--sans)', fontSize: 12, fontWeight: 700, cursor: 'pointer', marginRight: 'auto' }}>
-          Usuń klienta
+      <div style={{ display: 'flex', gap: 12, alignItems: 'center', marginTop: 28, borderTop: '1px solid var(--border)', paddingTop: 24, flexWrap: 'wrap' }}>
+        <button
+          onClick={() => onDelete(client.id)}
+          style={{ padding: '10px 16px', borderRadius: 8, border: '1px solid var(--danger)', background: 'transparent', color: 'var(--danger)', fontFamily: 'var(--sans)', fontSize: 13, fontWeight: 700, cursor: 'pointer', marginRight: 'auto' }}
+        >
+          Usuń
         </button>
-        {onAddToDayPlan && (() => {
-          const inPlan = dayPlanIds.includes(client.id)
-          return (
-            <button
-              onClick={() => { onAddToDayPlan(client); if (!inPlan) onClose() }}
-              disabled={inPlan}
-              style={{ padding: '12px 20px', borderRadius: 8, border: `1px solid ${inPlan ? 'var(--border)' : 'var(--accent2)'}`, background: inPlan ? 'var(--surface2)' : 'rgba(92,170,255,0.1)', color: inPlan ? 'var(--muted)' : 'var(--accent2)', fontFamily: 'var(--sans)', fontSize: 14, fontWeight: 700, cursor: inPlan ? 'default' : 'pointer' }}
-            >
-              {inPlan ? '✓ W planie dnia' : '📅 Dodaj do planu dnia'}
-            </button>
-          )
-        })()}
-        <button onClick={onClose} style={{ padding: '12px 24px', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--surface2)', color: 'var(--text)', fontFamily: 'var(--sans)', fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>
+
+        <button
+          onClick={inPlan ? undefined : handleAddToPlan}
+          disabled={inPlan}
+          style={{
+            padding: '10px 18px', borderRadius: 8, fontFamily: 'var(--sans)', fontSize: 13, fontWeight: 700,
+            border: inPlan ? '1px solid var(--border)' : '1px solid var(--accent2)',
+            background: inPlan ? 'var(--surface2)' : 'rgba(92,170,255,0.12)',
+            color: inPlan ? 'var(--muted)' : 'var(--accent2)',
+            cursor: inPlan ? 'default' : 'pointer',
+            opacity: inPlan ? 0.6 : 1,
+          }}
+        >
+          {inPlan ? '✓ W planie dnia' : '📅 Dodaj do planu dnia'}
+        </button>
+
+        <button
+          onClick={onClose}
+          style={{ padding: '10px 20px', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--surface2)', color: 'var(--text)', fontFamily: 'var(--sans)', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}
+        >
           Zamknij
         </button>
-        <button onClick={() => onEdit(client)} style={{ padding: '12px 24px', borderRadius: 8, border: 'none', background: 'var(--accent)', color: '#0d0e10', fontFamily: 'var(--sans)', fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>
+
+        <button
+          onClick={() => onEdit(client)}
+          style={{ padding: '10px 20px', borderRadius: 8, border: 'none', background: 'var(--accent)', color: '#0d0e10', fontFamily: 'var(--sans)', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}
+        >
           Edytuj
         </button>
       </div>
