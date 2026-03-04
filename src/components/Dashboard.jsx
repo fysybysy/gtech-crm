@@ -12,7 +12,7 @@ function StatCard({ label, value, color }) {
   )
 }
 
-export default function Dashboard({ clients, onMeetingSave, onClientClick, dayPlan, setDayPlan }) {
+export default function Dashboard({ clients = [], onMeetingSave, onClientClick, dayPlan = [], setDayPlan = () => {} }) {
   return (
     <div style={{ padding: 40 }}>
       <div style={{ fontSize: 32, fontWeight: 800, marginBottom: 8, letterSpacing: -1 }}>Dobry dzień 👋</div>

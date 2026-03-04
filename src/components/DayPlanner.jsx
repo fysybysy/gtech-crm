@@ -86,7 +86,7 @@ function ClientSearchDrop({ clients, plannedIds, onAdd }) {
   )
 }
 
-export default function DayPlanner({ clients, dayPlan, setDayPlan }) {
+export default function DayPlanner({ clients = [], dayPlan = [], setDayPlan = () => {} }) {
   const plannedIds = dayPlan.map(c => c.id)
 
   const addClient = (c) => {
