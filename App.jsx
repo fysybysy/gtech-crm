@@ -11,19 +11,27 @@ export default function App() {
   const { clients, loading, save, remove } = useClients()
   const { toasts, toast } = useToast()
 
-  const [view, setView] = useState('home') // 'home' | 'clients'
+  const [view, setView] = useState('home')
   const [formOpen, setFormOpen] = useState(false)
   const [editClient, setEditClient] = useState(null)
   const [detailClient, setDetailClient] = useState(null)
+  const [dayPlan, setDayPlan] = useState([])
 
-  // ── Handlers ──────────────────────────────────────────
+  const addToDayPlan = (c) => {
+    if (dayPlan.find(x => x.id === c.id)) {
+      toast(`${c.name} już jest w planie dnia`, true)
+      return
+    }
+    setDayPlan(prev => [...prev, c])
+    toast(`${c.name} dodany do planu dnia ✓`)
+  }
+
   const handleSaveClient = async (form) => {
     try {
       await save(form)
       toast(form.id ? 'Klient zaktualizowany ✓' : 'Klient dodany ✓')
       setFormOpen(false)
       setEditClient(null)
-      // refresh detail if open
       if (detailClient?.id === form.id) setDetailClient(null)
     } catch (e) {
       toast('Błąd zapisu — sprawdź połączenie', true)
@@ -65,12 +73,10 @@ export default function App() {
   }
 
   const openDetail = (c) => {
-    // always get fresh data from clients array
     const fresh = clients.find(x => x.id === c.id) || c
     setDetailClient(fresh)
   }
 
-  // ── Export / Import ────────────────────────────────────
   const handleExport = () => {
     const json = JSON.stringify({ exportDate: new Date().toISOString(), clients }, null, 2)
     const blob = new Blob([json], { type: 'application/json' })
@@ -97,7 +103,6 @@ export default function App() {
     input.click()
   }
 
-  // ── Styles ─────────────────────────────────────────────
   const navBtn = (active) => ({
     padding: '8px 20px', borderRadius: 6, border: 'none',
     background: active ? 'var(--accent)' : 'transparent',
@@ -116,7 +121,6 @@ export default function App() {
 
   return (
     <>
-      {/* Header */}
       <header style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '18px 40px', borderBottom: '1px solid var(--border)', background: 'var(--surface)', position: 'sticky', top: 0, zIndex: 100 }}>
         <div style={{ fontSize: 22, fontWeight: 800, letterSpacing: -0.5 }}>
           G-TECH<span style={{ color: 'var(--accent)' }}>.</span>crm
@@ -136,7 +140,6 @@ export default function App() {
         </div>
       </header>
 
-      {/* Loading bar */}
       {loading && (
         <div style={{ height: 3, background: 'var(--border)', position: 'relative', overflow: 'hidden' }}>
           <div style={{ position: 'absolute', top: 0, left: '-100%', width: '60%', height: '100%', background: 'var(--accent)', animation: 'loadbar 1.2s ease infinite' }} />
@@ -144,12 +147,13 @@ export default function App() {
         </div>
       )}
 
-      {/* Views */}
       {view === 'home' && (
         <Dashboard
           clients={clients}
           onMeetingSave={handleMeetingSave}
           onClientClick={openDetail}
+          dayPlan={dayPlan}
+          setDayPlan={setDayPlan}
         />
       )}
 
@@ -167,7 +171,6 @@ export default function App() {
         </div>
       )}
 
-      {/* Modals */}
       <ClientForm
         open={formOpen}
         onClose={() => { setFormOpen(false); setEditClient(null) }}
@@ -181,6 +184,8 @@ export default function App() {
         client={detailClient}
         onEdit={openEdit}
         onDelete={handleDeleteClient}
+        onAddToDayPlan={addToDayPlan}
+        dayPlanIds={dayPlan.map(c => c.id)}
       />
 
       <ToastContainer toasts={toasts} />
