@@ -1,6 +1,7 @@
 import React from 'react'
 import MeetingPanel from './MeetingPanel'
 import DayPlanner from './DayPlanner'
+import AlertPanels from './AlertPanels'
 
 function StatCard({ label, value, color }) {
   return (
@@ -25,10 +26,14 @@ export default function Dashboard({ clients, onMeetingSave, onClientClick }) {
         <StatCard label="Aktywni klienci" value={clients.filter(c => c.stage === 'Klient').length} color="var(--accent)" />
       </div>
 
+      {/* Main panels row */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24, maxWidth: 1100 }}>
         <MeetingPanel clients={clients} onSave={onMeetingSave} />
         <DayPlanner clients={clients} onClientClick={onClientClick} />
       </div>
+
+      {/* Alert panels row */}
+      <AlertPanels clients={clients} onClientClick={onClientClick} />
     </div>
   )
 }
