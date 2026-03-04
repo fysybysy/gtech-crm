@@ -1,0 +1,942 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>G-TECH CRM</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d0e10;
+    --surface: #14161a;
+    --surface2: #1c1f25;
+    --border: #252830;
+    --accent: #d4ff5c;
+    --accent2: #5caaff;
+    --danger: #ff5c5c;
+    --warn: #ffb85c;
+    --text: #e8eaf0;
+    --muted: #5a5f6e;
+    --mono: 'DM Mono', monospace;
+    --sans: 'Syne', sans-serif;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* HEADER */
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 40px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+    position: sticky; top: 0; z-index: 100;
+  }
+  .logo {
+    font-size: 22px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    color: var(--text);
+  }
+  .logo span { color: var(--accent); }
+  .nav-tabs { display: flex; gap: 4px; }
+  .nav-tab {
+    padding: 8px 20px;
+    border-radius: 6px;
+    border: none;
+    background: transparent;
+    color: var(--muted);
+    font-family: var(--sans);
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .nav-tab:hover { color: var(--text); background: var(--surface2); }
+  .nav-tab.active { background: var(--accent); color: #0d0e10; }
+
+  /* VIEWS */
+  .view { display: none; padding: 40px; }
+  .view.active { display: block; }
+
+  /* PAGE TITLE */
+  .page-title {
+    font-size: 32px;
+    font-weight: 800;
+    margin-bottom: 8px;
+    letter-spacing: -1px;
+  }
+  .page-sub { color: var(--muted); font-size: 14px; margin-bottom: 32px; font-family: var(--mono); }
+
+  /* STATS BAR */
+  .stats-bar { display: flex; gap: 16px; margin-bottom: 36px; flex-wrap: wrap; }
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px 28px;
+    min-width: 160px;
+    flex: 1;
+  }
+  .stat-label { font-size: 11px; font-family: var(--mono); color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+  .stat-value { font-size: 28px; font-weight: 800; }
+  .stat-value.accent { color: var(--accent); }
+  .stat-value.blue { color: var(--accent2); }
+  .stat-value.warn { color: var(--warn); }
+
+  /* MEETING START */
+  .meeting-panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 40px;
+    max-width: 600px;
+    margin: 0 auto;
+  }
+  .meeting-panel h2 { font-size: 22px; font-weight: 700; margin-bottom: 24px; }
+
+  /* FORM ELEMENTS */
+  .form-group { margin-bottom: 20px; }
+  label { display: block; font-size: 12px; font-family: var(--mono); color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+  input, select, textarea {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 15px;
+    padding: 12px 16px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  input:focus, select:focus, textarea:focus { border-color: var(--accent); }
+  textarea { resize: vertical; min-height: 100px; }
+  select option { background: var(--surface2); }
+
+  /* SEARCH BOX */
+  .search-wrap { position: relative; margin-bottom: 20px; }
+  .search-wrap input { padding-left: 44px; }
+  .search-icon {
+    position: absolute; left: 14px; top: 50%; transform: translateY(-50%);
+    color: var(--muted); font-size: 18px; pointer-events: none;
+  }
+
+  /* BUTTONS */
+  .btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 12px 24px; border-radius: 8px; border: none;
+    font-family: var(--sans); font-size: 14px; font-weight: 700;
+    cursor: pointer; transition: all 0.2s; text-decoration: none;
+  }
+  .btn-primary { background: var(--accent); color: #0d0e10; }
+  .btn-primary:hover { background: #c8f050; transform: translateY(-1px); }
+  .btn-secondary { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
+  .btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
+  .btn-danger { background: transparent; color: var(--danger); border: 1px solid var(--danger); padding: 6px 14px; font-size: 12px; }
+  .btn-danger:hover { background: var(--danger); color: #fff; }
+  .btn-sm { padding: 6px 14px; font-size: 12px; }
+  .btn-icon { padding: 8px; border-radius: 6px; }
+
+  /* CLIENTS SELECT */
+  #meeting-client-search { margin-bottom: 0; }
+  .client-dropdown {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-top: none;
+    border-radius: 0 0 8px 8px;
+    max-height: 220px;
+    overflow-y: auto;
+    display: none;
+  }
+  .client-dropdown.open { display: block; }
+  .client-option {
+    padding: 12px 16px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background 0.15s;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .client-option:hover { background: var(--border); }
+  .client-option.selected { background: rgba(212,255,92,0.1); color: var(--accent); }
+  .client-option .stage-badge { font-size: 11px; font-family: var(--mono); }
+
+  /* TABLE */
+  .table-controls {
+    display: flex; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; align-items: center;
+  }
+  .table-controls .search-wrap { flex: 1; min-width: 200px; margin-bottom: 0; }
+  .filter-select { max-width: 180px; margin-bottom: 0 !important; }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+  }
+  thead th {
+    padding: 12px 16px;
+    text-align: left;
+    font-size: 11px;
+    font-family: var(--mono);
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+    cursor: pointer;
+    user-select: none;
+  }
+  thead th:hover { color: var(--text); }
+  thead th .sort-icon { margin-left: 4px; opacity: 0.4; }
+  thead th.sorted .sort-icon { opacity: 1; color: var(--accent); }
+  tbody tr {
+    border-bottom: 1px solid var(--border);
+    transition: background 0.15s;
+    cursor: pointer;
+  }
+  tbody tr:hover { background: var(--surface2); }
+  td { padding: 14px 16px; vertical-align: middle; }
+  .td-name { font-weight: 700; }
+  .td-mono { font-family: var(--mono); font-size: 12px; color: var(--muted); }
+
+  /* STAGE BADGES */
+  .badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-family: var(--mono);
+    font-weight: 500;
+    white-space: nowrap;
+  }
+  .badge-1wizyta   { background: rgba(92,170,255,0.12); color: #7ec8ff; }
+  .badge-2wizyta   { background: rgba(120,92,255,0.15); color: #b09aff; }
+  .badge-3wizyta   { background: rgba(255,184,92,0.15); color: var(--warn); }
+  .badge-produktowe{ background: rgba(255,120,92,0.15); color: #ff9a7c; }
+  .badge-1zamowienie{ background: rgba(92,255,180,0.15); color: #5cffb8; }
+  .badge-klient    { background: rgba(212,255,92,0.15); color: var(--accent); }
+
+  /* CHANCE BAR */
+  .chance-wrap { display: flex; align-items: center; gap: 8px; }
+  .chance-bar-bg { flex: 1; height: 4px; background: var(--border); border-radius: 2px; }
+  .chance-bar { height: 4px; border-radius: 2px; background: var(--accent); transition: width 0.3s; }
+  .chance-text { font-family: var(--mono); font-size: 11px; color: var(--muted); white-space: nowrap; }
+
+  /* MODAL */
+  .modal-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.7);
+    backdrop-filter: blur(4px);
+    z-index: 200;
+    display: flex; align-items: center; justify-content: center;
+    padding: 20px;
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.2s;
+  }
+  .modal-overlay.open { opacity: 1; pointer-events: all; }
+  .modal {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    width: 100%;
+    max-width: 700px;
+    max-height: 90vh;
+    overflow-y: auto;
+    padding: 36px;
+    transform: translateY(20px);
+    transition: transform 0.2s;
+  }
+  .modal-overlay.open .modal { transform: translateY(0); }
+  .modal-header {
+    display: flex; align-items: flex-start; justify-content: space-between;
+    margin-bottom: 28px;
+  }
+  .modal-title { font-size: 22px; font-weight: 800; }
+  .modal-close {
+    background: none; border: none; color: var(--muted);
+    font-size: 22px; cursor: pointer; padding: 4px;
+    transition: color 0.2s; line-height: 1;
+  }
+  .modal-close:hover { color: var(--text); }
+
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .form-actions { display: flex; gap: 12px; justify-content: flex-end; margin-top: 28px; border-top: 1px solid var(--border); padding-top: 24px; }
+
+  /* CLIENT DETAIL */
+  .detail-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-bottom: 28px; }
+  .detail-item { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 16px; }
+  .detail-item .d-label { font-size: 11px; font-family: var(--mono); color: var(--muted); text-transform: uppercase; margin-bottom: 6px; }
+  .detail-item .d-value { font-size: 15px; font-weight: 600; }
+
+  .notes-section h3 { font-size: 14px; font-family: var(--mono); color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 16px; }
+  .note-list { display: flex; flex-direction: column; gap: 10px; max-height: 240px; overflow-y: auto; }
+  .note-item {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px;
+  }
+  .note-item .note-date { font-size: 11px; font-family: var(--mono); color: var(--muted); margin-bottom: 6px; }
+  .note-item .note-text { font-size: 14px; line-height: 1.5; }
+
+  /* EMPTY STATE */
+  .empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--muted);
+  }
+  .empty-state .empty-icon { font-size: 48px; margin-bottom: 16px; }
+  .empty-state p { font-size: 14px; font-family: var(--mono); }
+
+  /* TOAST */
+  .toast-container { position: fixed; bottom: 24px; right: 24px; z-index: 999; display: flex; flex-direction: column; gap: 8px; }
+  .toast {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent);
+    border-radius: 8px;
+    padding: 14px 20px;
+    font-size: 14px;
+    min-width: 260px;
+    animation: slideIn 0.3s ease;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+  }
+  .toast.toast-error { border-left-color: var(--danger); }
+  @keyframes slideIn { from { transform: translateX(40px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+  @keyframes fadeOut { to { opacity: 0; transform: translateX(40px); } }
+
+  /* SCROLLBAR */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--muted); }
+
+  /* RESPONSIVE */
+  @media (max-width: 768px) {
+    header { padding: 14px 20px; }
+    .view { padding: 24px 20px; }
+    .form-row { grid-template-columns: 1fr; }
+    .detail-grid { grid-template-columns: 1fr 1fr; }
+    .stats-bar { gap: 10px; }
+    table { font-size: 13px; }
+    td, th { padding: 10px 10px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">G-TECH<span>.</span>crm</div>
+  <div class="nav-tabs">
+    <button class="nav-tab active" onclick="showView('home')">Pulpit</button>
+    <button class="nav-tab" onclick="showView('clients')">Klienci</button>
+    <button class="nav-tab" onclick="openAddClientModal()">+ Nowy klient</button>
+    <button class="nav-tab" onclick="importData()" style="border:1px solid var(--border);">↑ Importuj</button>
+    <button class="nav-tab" onclick="exportData()" style="border:1px solid var(--border);">↓ Eksportuj</button>
+  </div>
+</header>
+
+<!-- HOME VIEW -->
+<div class="view active" id="view-home">
+  <div class="page-title">Dobry dzień 👋</div>
+  <div class="page-sub">// Panel główny — zarządzanie klientami i spotkaniami</div>
+
+  <div class="stats-bar" id="stats-bar">
+    <div class="stat-card"><div class="stat-label">Wszyscy klienci</div><div class="stat-value accent" id="stat-total">—</div></div>
+    <div class="stat-card"><div class="stat-label">1 Wizyta</div><div class="stat-value blue" id="stat-leads">—</div></div>
+    <div class="stat-card"><div class="stat-label">Spotkanie prod.</div><div class="stat-value warn" id="stat-prospects">—</div></div>
+    <div class="stat-card"><div class="stat-label">Aktywni klienci</div><div class="stat-value accent" id="stat-clients">—</div></div>
+  </div>
+
+  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; max-width: 1100px;">
+    <!-- NEW MEETING -->
+    <div class="meeting-panel">
+      <h2>🤝 Nowe spotkanie</h2>
+      <div class="form-group">
+        <label>Wybierz klienta</label>
+        <div class="search-wrap" style="margin-bottom:0">
+          <span class="search-icon">⌕</span>
+          <input type="text" id="meeting-client-search" placeholder="Wpisz nazwę klienta..." autocomplete="off" oninput="filterMeetingClients()">
+        </div>
+        <div class="client-dropdown" id="meeting-dropdown"></div>
+      </div>
+      <div id="selected-client-info" style="display:none; margin-bottom:16px;">
+        <div style="background:rgba(212,255,92,0.08); border:1px solid rgba(212,255,92,0.2); border-radius:8px; padding:12px 16px; font-size:14px;">
+          <span style="color:var(--accent); font-weight:700;" id="selected-client-name"></span>
+          <span style="color:var(--muted); margin-left:10px; font-family:var(--mono); font-size:12px;" id="selected-client-stage"></span>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Data spotkania</label>
+        <input type="date" id="meeting-date">
+      </div>
+      <div class="form-group">
+        <label>Notatka ze spotkania</label>
+        <textarea id="meeting-note" placeholder="Co omawiano, ustalenia, kolejne kroki..."></textarea>
+      </div>
+      <div class="form-group">
+        <label>Próbka</label>
+        <input type="text" id="meeting-sample" placeholder="np. koko prot, doping szampon...">
+      </div>
+      <button class="btn btn-primary" onclick="saveMeeting()" style="width:100%">Zapisz spotkanie</button>
+    </div>
+
+    <!-- RECENT CLIENTS -->
+    <div>
+      <h2 style="font-size:18px; font-weight:700; margin-bottom:20px;">Ostatnio aktywni</h2>
+      <div id="recent-clients-list"></div>
+    </div>
+  </div>
+</div>
+
+<!-- CLIENTS VIEW -->
+<div class="view" id="view-clients">
+  <div class="page-title">Lista klientów</div>
+  <div class="page-sub">// Wszystkie rekordy — filtruj, sortuj, edytuj</div>
+
+  <div class="table-controls">
+    <div class="search-wrap">
+      <span class="search-icon">⌕</span>
+      <input type="text" id="client-search" placeholder="Szukaj po nazwie..." oninput="renderClientsTable()">
+    </div>
+    <select class="filter-select" id="filter-stage" onchange="renderClientsTable()" style="max-width:200px; margin-bottom:0;">
+      <option value="">Wszystkie etapy</option>
+      <option value="1 Wizyta">1 Wizyta</option>
+      <option value="2 Wizyta">2 Wizyta</option>
+      <option value="3 Wizyta">3 Wizyta</option>
+      <option value="Spotkanie produktowe">Spotkanie produktowe</option>
+      <option value="1 Zamówienie">1 Zamówienie</option>
+      <option value="Klient">Klient</option>
+    </select>
+    <button class="btn btn-primary btn-sm" onclick="openAddClientModal()">+ Dodaj klienta</button>
+  </div>
+
+  <div style="overflow-x:auto;">
+    <table>
+      <thead>
+        <tr>
+          <th onclick="sortBy('name')">Nazwa <span class="sort-icon" id="sort-name">↕</span></th>
+          <th onclick="sortBy('lastVisit')">Ostatnia wizyta <span class="sort-icon" id="sort-lastVisit">↕</span></th>
+          <th onclick="sortBy('lastContact')">Ost. kontakt <span class="sort-icon" id="sort-lastContact">↕</span></th>
+          <th onclick="sortBy('lastOrder')">Ost. zamówienie <span class="sort-icon" id="sort-lastOrder">↕</span></th>
+          <th onclick="sortBy('stage')">Etap <span class="sort-icon" id="sort-stage">↕</span></th>
+          <th onclick="sortBy('chance')">Szansa sprzed. <span class="sort-icon" id="sort-chance">↕</span></th>
+          <th>Akcje</th>
+        </tr>
+      </thead>
+      <tbody id="clients-tbody"></tbody>
+    </table>
+  </div>
+  <div id="no-results" class="empty-state" style="display:none">
+    <div class="empty-icon">🔍</div>
+    <p>Brak wyników — spróbuj innych filtrów</p>
+  </div>
+</div>
+
+<!-- ADD/EDIT CLIENT MODAL -->
+<div class="modal-overlay" id="client-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-title">Nowy klient</div>
+      <button class="modal-close" onclick="closeClientModal()">✕</button>
+    </div>
+    <input type="hidden" id="edit-id">
+    <div class="form-row">
+      <div class="form-group">
+        <label>Nazwa klienta *</label>
+        <input type="text" id="f-name" placeholder="np. Firma ABC Sp. z o.o.">
+      </div>
+      <div class="form-group">
+        <label>Etap</label>
+        <select id="f-stage">
+          <option value="1 Wizyta">1 Wizyta</option>
+          <option value="2 Wizyta">2 Wizyta</option>
+          <option value="3 Wizyta">3 Wizyta</option>
+          <option value="Spotkanie produktowe">Spotkanie produktowe</option>
+          <option value="1 Zamówienie">1 Zamówienie</option>
+          <option value="Klient">Klient</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Adres</label>
+      <input type="text" id="f-address" placeholder="ul. Przykładowa 1, 00-000 Warszawa">
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Ostatnia wizyta</label>
+        <input type="date" id="f-lastVisit">
+      </div>
+      <div class="form-group">
+        <label>Ostatni kontakt</label>
+        <input type="date" id="f-lastContact">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Ostatnie zamówienie</label>
+        <input type="date" id="f-lastOrder">
+      </div>
+      <div class="form-group">
+        <label>Szansa sprzedażowa (%)</label>
+        <input type="number" id="f-chance" min="0" max="100" placeholder="np. 70">
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Próbka</label>
+      <input type="text" id="f-sample" placeholder="np. Model X, wersja testowa...">
+    </div>
+    <div class="form-group">
+      <label>Notatka</label>
+      <textarea id="f-note" placeholder="Dodatkowe informacje o kliencie..."></textarea>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-secondary" onclick="closeClientModal()">Anuluj</button>
+      <button class="btn btn-primary" onclick="saveClient()">Zapisz klienta</button>
+    </div>
+  </div>
+</div>
+
+<!-- CLIENT DETAIL MODAL -->
+<div class="modal-overlay" id="detail-modal">
+  <div class="modal" style="max-width:780px;">
+    <div class="modal-header">
+      <div>
+        <div class="modal-title" id="detail-name"></div>
+        <div style="font-size:13px; color:var(--muted); margin-top:4px; font-family:var(--mono);" id="detail-address"></div>
+      </div>
+      <button class="modal-close" onclick="closeDetailModal()">✕</button>
+    </div>
+    <div class="detail-grid" id="detail-grid"></div>
+    <div class="notes-section">
+      <h3>Historia notatek</h3>
+      <div class="note-list" id="detail-notes"></div>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-danger" id="detail-delete-btn">Usuń klienta</button>
+      <button class="btn btn-secondary" onclick="closeDetailModal()">Zamknij</button>
+      <button class="btn btn-primary" id="detail-edit-btn">Edytuj</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST CONTAINER -->
+<div class="toast-container" id="toast-container"></div>
+
+<script>
+// legacy handlers bridged via window.* in module script below
+</script>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, collection, doc, getDocs, getDoc, setDoc, addDoc, deleteDoc, query, orderBy } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBeOS6mMftLFfe_qBVBcY2PYSCf-xPTfSE",
+  authDomain: "g-tech-crm.firebaseapp.com",
+  projectId: "g-tech-crm",
+  storageBucket: "g-tech-crm.firebasestorage.app",
+  messagingSenderId: "214638553585",
+  appId: "1:214638553585:web:48b023b6e567cc0da2bc50"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const COLL = 'clients';
+
+// ===== DB LAYER (replaces IndexedDB) =====
+async function dbGetAll() {
+  const snap = await getDocs(collection(db, COLL));
+  return snap.docs.map(d => ({ ...d.data(), id: d.id }));
+}
+
+async function dbGet(id) {
+  const snap = await getDoc(doc(db, COLL, String(id)));
+  if (!snap.exists()) return null;
+  return { ...snap.data(), id: snap.id };
+}
+
+async function dbPut(obj) {
+  const { id, ...data } = obj;
+  if (id) {
+    await setDoc(doc(db, COLL, String(id)), data);
+    return id;
+  } else {
+    const ref = await addDoc(collection(db, COLL), data);
+    return ref.id;
+  }
+}
+
+async function dbDelete(id) {
+  await deleteDoc(doc(db, COLL, String(id)));
+}
+
+// ===== EXPOSE TO GLOBAL SCOPE (needed by inline onclick handlers) =====
+window._db = { dbGetAll, dbGet, dbPut, dbDelete };
+
+// ===== STATE =====
+let allClients = [];
+let sortKey = 'name';
+let sortDir = 1;
+let selectedClientId = null;
+let currentDetailId = null;
+
+// ===== NAVIGATION =====
+window.showView = function(v) {
+  document.querySelectorAll('.view').forEach(x => x.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(x => x.classList.remove('active'));
+  document.getElementById('view-' + v).classList.add('active');
+  const tabs = document.querySelectorAll('.nav-tab');
+  if (v === 'home') tabs[0].classList.add('active');
+  if (v === 'clients') tabs[1].classList.add('active');
+  if (v === 'clients') renderClientsTable();
+  if (v === 'home') renderHome();
+}
+
+// ===== TOAST =====
+window.toast = function(msg, err = false) {
+  const c = document.getElementById('toast-container');
+  const t = document.createElement('div');
+  t.className = 'toast' + (err ? ' toast-error' : '');
+  t.textContent = msg;
+  c.appendChild(t);
+  setTimeout(() => { t.style.animation = 'fadeOut 0.3s ease forwards'; setTimeout(() => t.remove(), 300); }, 2500);
+}
+
+// ===== STAGE BADGE =====
+function stageBadge(stage) {
+  const map = {
+    '1 Wizyta':              'badge-1wizyta',
+    '2 Wizyta':              'badge-2wizyta',
+    '3 Wizyta':              'badge-3wizyta',
+    'Spotkanie produktowe':  'badge-produktowe',
+    '1 Zamówienie':          'badge-1zamowienie',
+    'Klient':                'badge-klient',
+  };
+  return `<span class="badge ${map[stage] || 'badge-1wizyta'}">${stage || '1 Wizyta'}</span>`;
+}
+
+function formatDate(d) {
+  if (!d) return '<span style="color:var(--muted)">—</span>';
+  const dt = new Date(d);
+  return dt.toLocaleDateString('pl-PL', { day: '2-digit', month: '2-digit', year: 'numeric' });
+}
+
+// ===== HOME =====
+async function renderHome() {
+  allClients = await dbGetAll();
+  document.getElementById('stat-total').textContent = allClients.length;
+  document.getElementById('stat-leads').textContent = allClients.filter(c => c.stage === '1 Wizyta').length;
+  document.getElementById('stat-prospects').textContent = allClients.filter(c => c.stage === 'Spotkanie produktowe').length;
+  document.getElementById('stat-clients').textContent = allClients.filter(c => c.stage === 'Klient').length;
+
+  const recent = [...allClients]
+    .filter(c => c.lastVisit)
+    .sort((a, b) => new Date(b.lastVisit) - new Date(a.lastVisit))
+    .slice(0, 5);
+
+  const el = document.getElementById('recent-clients-list');
+  if (!recent.length) {
+    el.innerHTML = '<div class="empty-state"><div class="empty-icon">📭</div><p>Brak ostatnich spotkań</p></div>';
+    return;
+  }
+  el.innerHTML = recent.map(c => `
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:10px;cursor:pointer;transition:border-color 0.2s;" onmouseenter="this.style.borderColor='var(--accent)'" onmouseleave="this.style.borderColor='var(--border)'" onclick="openDetailModal('${c.id}')">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+        <span style="font-weight:700;">${c.name}</span>
+        ${stageBadge(c.stage)}
+      </div>
+      <div style="font-size:12px;font-family:var(--mono);color:var(--muted);">Wizyta: ${formatDate(c.lastVisit)}</div>
+    </div>
+  `).join('');
+}
+
+// ===== MEETING =====
+window.filterMeetingClients = async function() {
+  const q = document.getElementById('meeting-client-search').value.toLowerCase();
+  allClients = await dbGetAll();
+  const filtered = q ? allClients.filter(c => c.name.toLowerCase().includes(q)) : allClients;
+  const dd = document.getElementById('meeting-dropdown');
+  if (!filtered.length) { dd.innerHTML = '<div class="client-option" style="color:var(--muted)">Brak wyników</div>'; dd.classList.add('open'); return; }
+  dd.innerHTML = filtered.map(c => `
+    <div class="client-option ${c.id === selectedClientId ? 'selected' : ''}" onclick="selectMeetingClient('${c.id}', '${c.name.replace(/'/g,"\\'")}', '${c.stage || '1 Wizyta'}')">
+      <span>${c.name}</span>
+      <span class="stage-badge">${c.stage || '1 Wizyta'}</span>
+    </div>
+  `).join('');
+  dd.classList.add('open');
+}
+
+window.selectMeetingClient = function(id, name, stage) {
+  selectedClientId = id;
+  document.getElementById('meeting-client-search').value = name;
+  document.getElementById('meeting-dropdown').classList.remove('open');
+  document.getElementById('selected-client-info').style.display = 'block';
+  document.getElementById('selected-client-name').textContent = name;
+  document.getElementById('selected-client-stage').textContent = stage;
+}
+
+document.addEventListener('click', e => {
+  if (!e.target.closest('#meeting-client-search') && !e.target.closest('#meeting-dropdown')) {
+    document.getElementById('meeting-dropdown').classList.remove('open');
+  }
+});
+
+window.saveMeeting = async function() {
+  if (!selectedClientId) { toast('Wybierz klienta', true); return; }
+  const date = document.getElementById('meeting-date').value;
+  const note = document.getElementById('meeting-note').value.trim();
+  if (!date) { toast('Podaj datę spotkania', true); return; }
+  if (!note) { toast('Dodaj notatkę ze spotkania', true); return; }
+
+  const meetingSample = document.getElementById('meeting-sample').value.trim();
+
+  const client = await dbGet(selectedClientId);
+  if (!client) { toast('Klient nie znaleziony', true); return; }
+
+  client.lastVisit = date;
+  if (meetingSample) client.sample = meetingSample;
+  if (!client.notes) client.notes = [];
+  client.notes.unshift({ date, text: note, sample: meetingSample });
+
+  await dbPut(client);
+  toast(`Spotkanie z ${client.name} zapisane ✓`);
+
+  selectedClientId = null;
+  document.getElementById('meeting-client-search').value = '';
+  document.getElementById('meeting-date').value = new Date().toISOString().split('T')[0];
+  document.getElementById('meeting-note').value = '';
+  document.getElementById('meeting-sample').value = '';
+  document.getElementById('selected-client-info').style.display = 'none';
+  renderHome();
+}
+
+// ===== EXPORT =====
+window.exportData = async function() {
+  const all = await dbGetAll();
+  const json = JSON.stringify({ exportDate: new Date().toISOString(), clients: all }, null, 2);
+  const blob = new Blob([json], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'database.json';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+// ===== IMPORT =====
+window.importData = function() {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = '.json';
+  input.onchange = async e => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const text = await file.text();
+    try {
+      const data = JSON.parse(text);
+      const clients = data.clients || data;
+      if (!Array.isArray(clients)) throw new Error();
+      toast('Importowanie...', false);
+      for (const c of clients) {
+        await dbPut(c);
+      }
+      toast(`Zaimportowano ${clients.length} klientów ✓`);
+      renderHome();
+      renderClientsTable();
+    } catch {
+      toast('Błąd importu — nieprawidłowy plik JSON', true);
+    }
+  };
+  input.click();
+}
+
+// ===== CLIENTS TABLE =====
+window.sortBy = function(key) {
+  if (sortKey === key) sortDir *= -1;
+  else { sortKey = key; sortDir = 1; }
+  document.querySelectorAll('.sort-icon').forEach(x => x.textContent = '↕');
+  const el = document.getElementById('sort-' + key);
+  if (el) el.textContent = sortDir === 1 ? '↑' : '↓';
+  document.querySelectorAll('thead th').forEach(x => x.classList.remove('sorted'));
+  event.currentTarget.classList.add('sorted');
+  renderClientsTable();
+}
+
+async function renderClientsTable() {
+  allClients = await dbGetAll();
+  const q = (document.getElementById('client-search')?.value || '').toLowerCase();
+  const stage = document.getElementById('filter-stage')?.value || '';
+
+  let filtered = allClients.filter(c => {
+    const matchQ = !q || c.name.toLowerCase().includes(q);
+    const matchS = !stage || c.stage === stage;
+    return matchQ && matchS;
+  });
+
+  filtered.sort((a, b) => {
+    let av = a[sortKey] || '', bv = b[sortKey] || '';
+    if (sortKey === 'chance') { av = Number(av); bv = Number(bv); }
+    if (av < bv) return -sortDir;
+    if (av > bv) return sortDir;
+    return 0;
+  });
+
+  const tbody = document.getElementById('clients-tbody');
+  document.getElementById('no-results').style.display = filtered.length ? 'none' : 'block';
+
+  if (!filtered.length) { tbody.innerHTML = ''; return; }
+
+  tbody.innerHTML = filtered.map(c => {
+    const chance = Number(c.chance) || 0;
+    return `
+    <tr onclick="openDetailModal('${c.id}')">
+      <td class="td-name">${c.name}</td>
+      <td class="td-mono">${formatDate(c.lastVisit)}</td>
+      <td class="td-mono">${formatDate(c.lastContact)}</td>
+      <td class="td-mono">${formatDate(c.lastOrder)}</td>
+      <td>${stageBadge(c.stage)}</td>
+      <td>
+        <div class="chance-wrap">
+          <div class="chance-bar-bg"><div class="chance-bar" style="width:${chance}%"></div></div>
+          <span class="chance-text">${chance}%</span>
+        </div>
+      </td>
+      <td onclick="event.stopPropagation()">
+        <button class="btn btn-secondary btn-sm" onclick="openEditModal('${c.id}')">Edytuj</button>
+      </td>
+    </tr>
+  `;}).join('');
+}
+
+// ===== ADD / EDIT MODAL =====
+window.openAddClientModal = function() {
+  document.getElementById('modal-title').textContent = 'Nowy klient';
+  document.getElementById('edit-id').value = '';
+  ['name','address','lastVisit','lastContact','lastOrder','chance','sample','note'].forEach(f => document.getElementById('f-'+f).value = '');
+  document.getElementById('f-stage').value = '1 Wizyta';
+  document.getElementById('client-modal').classList.add('open');
+}
+
+window.openEditModal = async function(id) {
+  const c = await dbGet(id);
+  if (!c) return;
+  document.getElementById('modal-title').textContent = 'Edytuj klienta';
+  document.getElementById('edit-id').value = c.id;
+  document.getElementById('f-name').value = c.name || '';
+  document.getElementById('f-address').value = c.address || '';
+  document.getElementById('f-lastVisit').value = c.lastVisit || '';
+  document.getElementById('f-lastContact').value = c.lastContact || '';
+  document.getElementById('f-lastOrder').value = c.lastOrder || '';
+  document.getElementById('f-stage').value = c.stage || '1 Wizyta';
+  document.getElementById('f-chance').value = c.chance || '';
+  document.getElementById('f-sample').value = c.sample || '';
+  document.getElementById('f-note').value = c.note || '';
+  document.getElementById('client-modal').classList.add('open');
+}
+
+window.closeClientModal = function() {
+  document.getElementById('client-modal').classList.remove('open');
+}
+
+window.saveClient = async function() {
+  const name = document.getElementById('f-name').value.trim();
+  if (!name) { toast('Nazwa klienta jest wymagana', true); return; }
+
+  const editId = document.getElementById('edit-id').value;
+  const existing = editId ? (await dbGet(editId) || {}) : {};
+
+  const obj = {
+    ...existing,
+    name,
+    address: document.getElementById('f-address').value.trim(),
+    lastVisit: document.getElementById('f-lastVisit').value,
+    lastContact: document.getElementById('f-lastContact').value,
+    lastOrder: document.getElementById('f-lastOrder').value,
+    stage: document.getElementById('f-stage').value,
+    chance: document.getElementById('f-chance').value,
+    sample: document.getElementById('f-sample').value.trim(),
+    note: document.getElementById('f-note').value.trim(),
+  };
+  if (editId) obj.id = editId;
+
+  await dbPut(obj);
+  toast(editId ? 'Klient zaktualizowany ✓' : 'Klient dodany ✓');
+  closeClientModal();
+  renderClientsTable();
+  renderHome();
+}
+
+// ===== DETAIL MODAL =====
+window.openDetailModal = async function(id) {
+  currentDetailId = id;
+  const c = await dbGet(id);
+  if (!c) return;
+
+  document.getElementById('detail-name').textContent = c.name;
+  document.getElementById('detail-address').textContent = c.address || 'Brak adresu';
+
+  const items = [
+    { label: 'Etap', value: stageBadge(c.stage) },
+    { label: 'Szansa sprzedażowa', value: `<span style="color:var(--accent);font-family:var(--mono)">${c.chance || 0}%</span>` },
+    { label: 'Próbka', value: c.sample ? `<span style="font-size:13px;font-weight:400;">${c.sample}</span>` : '<span style="color:var(--muted)">—</span>' },
+    { label: 'Ostatnia wizyta', value: formatDate(c.lastVisit) },
+    { label: 'Ostatni kontakt', value: formatDate(c.lastContact) },
+    { label: 'Ostatnie zamówienie', value: formatDate(c.lastOrder) },
+    { label: 'Notatka', value: c.note ? `<span style="font-size:13px;font-weight:400;">${c.note}</span>` : '<span style="color:var(--muted)">—</span>' },
+  ];
+
+  document.getElementById('detail-grid').innerHTML = items.map(i => `
+    <div class="detail-item">
+      <div class="d-label">${i.label}</div>
+      <div class="d-value">${i.value}</div>
+    </div>
+  `).join('');
+
+  const notes = c.notes || [];
+  document.getElementById('detail-notes').innerHTML = notes.length
+    ? notes.map(n => `<div class="note-item"><div class="note-date">${formatDate(n.date)}${n.sample ? ` &nbsp;·&nbsp; <span style="color:var(--accent);font-family:var(--mono);font-size:11px;">próbka: ${n.sample}</span>` : ''}</div><div class="note-text">${n.text}</div></div>`).join('')
+    : '<div style="color:var(--muted);font-size:13px;font-family:var(--mono);padding:16px 0">Brak historii notatek</div>';
+
+  document.getElementById('detail-edit-btn').onclick = () => { closeDetailModal(); openEditModal(id); };
+  document.getElementById('detail-delete-btn').onclick = () => deleteClient(id);
+
+  document.getElementById('detail-modal').classList.add('open');
+}
+
+window.closeDetailModal = function() {
+  document.getElementById('detail-modal').classList.remove('open');
+  currentDetailId = null;
+}
+
+window.deleteClient = async function(id) {
+  if (!confirm('Czy na pewno chcesz usunąć tego klienta? Tej operacji nie można cofnąć.')) return;
+  await dbDelete(id);
+  toast('Klient usunięty');
+  closeDetailModal();
+  renderClientsTable();
+  renderHome();
+}
+
+// Close modals on overlay click
+document.getElementById('client-modal').addEventListener('click', e => { if (e.target === e.currentTarget) closeClientModal(); });
+document.getElementById('detail-modal').addEventListener('click', e => { if (e.target === e.currentTarget) closeDetailModal(); });
+
+// Today's date default for meeting
+document.getElementById('meeting-date').value = new Date().toISOString().split('T')[0];
+
+// ===== INIT =====
+(async () => {
+  toast('Łączenie z Firebase...');
+  await renderHome();
+})();
+</script>
+</body>
+</html>
