@@ -12,25 +12,26 @@ function StatCard({ label, value, color }) {
   )
 }
 
-export default function Dashboard({ clients = [], onMeetingSave, onClientClick, dayPlan = [], setDayPlan = () => {} }) {
+export default function Dashboard({ clients, onMeetingSave, onClientClick, planned, setPlanned }) {
+  const safeClients = Array.isArray(clients) ? clients : []
   return (
     <div style={{ padding: 40 }}>
       <div style={{ fontSize: 32, fontWeight: 800, marginBottom: 8, letterSpacing: -1 }}>Dobry dzień 👋</div>
       <div style={{ color: 'var(--muted)', fontSize: 14, marginBottom: 32, fontFamily: 'var(--mono)' }}>// Panel główny — zarządzanie klientami i spotkaniami</div>
 
       <div style={{ display: 'flex', gap: 16, marginBottom: 36, flexWrap: 'wrap' }}>
-        <StatCard label="Wszyscy klienci" value={clients.length} color="var(--accent)" />
-        <StatCard label="1 Wizyta" value={clients.filter(c => c.stage === '1 Wizyta').length} color="var(--accent2)" />
-        <StatCard label="Spotkanie prod." value={clients.filter(c => c.stage === 'Spotkanie produktowe').length} color="var(--warn)" />
-        <StatCard label="Aktywni klienci" value={clients.filter(c => c.stage === 'Klient').length} color="var(--accent)" />
+        <StatCard label="Wszyscy klienci" value={safeClients.length} color="var(--accent)" />
+        <StatCard label="1 Wizyta" value={safeClients.filter(c => c.stage === '1 Wizyta').length} color="var(--accent2)" />
+        <StatCard label="Spotkanie prod." value={safeClients.filter(c => c.stage === 'Spotkanie produktowe').length} color="var(--warn)" />
+        <StatCard label="Aktywni klienci" value={safeClients.filter(c => c.stage === 'Klient').length} color="var(--accent)" />
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24, maxWidth: 1100 }}>
-        <MeetingPanel clients={clients} onSave={onMeetingSave} />
-        <DayPlanner clients={clients} onClientClick={onClientClick} dayPlan={dayPlan} setDayPlan={setDayPlan} />
+        <MeetingPanel clients={safeClients} onSave={onMeetingSave} />
+        <DayPlanner clients={safeClients} planned={planned} setPlanned={setPlanned} />
       </div>
 
-      <AlertPanels clients={clients} onClientClick={onClientClick} />
+      <AlertPanels clients={safeClients} onClientClick={onClientClick} />
     </div>
   )
 }
