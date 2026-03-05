@@ -1,12 +1,13 @@
 import React, { useState, useRef, useEffect } from 'react'
 import { todayISO, STAGES } from '../utils'
 import StageBadge from './StageBadge'
+import { saveClient } from '../firebase'
 
 const inp = { width: '100%', background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 8, color: 'var(--text)', fontFamily: 'var(--sans)', fontSize: 14, padding: '11px 14px', outline: 'none' }
 const lbl = { display: 'block', fontSize: 11, fontFamily: 'var(--mono)', color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 7 }
 const fg = { marginBottom: 18 }
 
-export default function MeetingPanel({ clients, onSave }) {
+export default function MeetingPanel({ clients, onSaved }) {
   const [search, setSearch]     = useState('')
   const [selected, setSelected] = useState(null)
   const [dropOpen, setDropOpen] = useState(false)
@@ -17,6 +18,7 @@ export default function MeetingPanel({ clients, onSave }) {
   const [chance, setChance]     = useState('')
   const [isOrder, setIsOrder]   = useState(false)
   const [saving, setSaving]     = useState(false)
+  const [savedMsg, setSavedMsg] = useState('')
   const dropRef = useRef(null)
 
   const safeClients = Array.isArray(clients) ? clients : []
@@ -38,7 +40,7 @@ export default function MeetingPanel({ clients, onSave }) {
     setSearch(c.name)
     setDropOpen(false)
     setStage(c.stage || STAGES[0])
-    setChance(c.chance !== undefined && c.chance !== '' ? String(c.chance) : '')
+    setChance(c.chance !== undefined && c.chance !== '' ? String(c.chance) : '0')
     setIsOrder(false)
   }
 
@@ -51,8 +53,27 @@ export default function MeetingPanel({ clients, onSave }) {
     if (!selected || !date || !note.trim()) return
     setSaving(true)
     try {
-      await onSave({ client: selected, date, note, sample, stage, chance, isOrder })
+      // Build updated client — always write stage, chance, lastVisit
+      const updated = {
+        ...selected,
+        lastVisit: date,
+        stage: stage,
+        chance: chance,
+        notes: [{ date, text: note, sample }, ...(selected.notes || [])],
+      }
+      if (sample !== '') updated.sample = sample
+      if (isOrder) updated.lastOrder = date
+
+      console.log('Saving client update:', { stage, chance, isOrder, lastOrder: updated.lastOrder })
+
+      await saveClient(updated)
+      setSavedMsg(`Spotkanie z ${selected.name} zapisane ✓`)
+      setTimeout(() => setSavedMsg(''), 3000)
+      if (onSaved) onSaved()
       reset()
+    } catch (e) {
+      console.error('Save error:', e)
+      setSavedMsg('Błąd zapisu!')
     } finally {
       setSaving(false)
     }
@@ -111,19 +132,13 @@ export default function MeetingPanel({ clients, onSave }) {
         )}
       </div>
 
-      {/* Stage + Chance */}
+      {/* Stage + Chance — always visible after picking client */}
       {selected && (
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, marginBottom: 18, padding: 14, background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 9 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, marginBottom: 18, padding: 14, background: 'var(--bg)', border: '1px solid var(--accent)', borderRadius: 9 }}>
           <div>
             <label style={lbl}>Etap po spotkaniu</label>
-            <select
-              style={inp}
-              value={stage}
-              onChange={e => setStage(e.target.value)}
-            >
-              {STAGES.map(s => (
-                <option key={s} value={s}>{s}</option>
-              ))}
+            <select style={{ ...inp, cursor: 'pointer' }} value={stage} onChange={e => { console.log('stage change:', e.target.value); setStage(e.target.value) }}>
+              {STAGES.map(s => <option key={s} value={s}>{s}</option>)}
             </select>
           </div>
           <div>
@@ -132,8 +147,8 @@ export default function MeetingPanel({ clients, onSave }) {
               style={inp}
               type="number" min="0" max="100"
               value={chance}
-              onChange={e => setChance(e.target.value)}
-              placeholder={`Obecna: ${selected.chance || 0}%`}
+              onChange={e => { console.log('chance change:', e.target.value); setChance(e.target.value) }}
+              placeholder="0"
             />
           </div>
         </div>
@@ -155,24 +170,29 @@ export default function MeetingPanel({ clients, onSave }) {
       </div>
 
       {/* Order checkbox */}
-      <div style={{ marginBottom: 20, display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', background: isOrder ? 'rgba(92,255,180,0.08)' : 'var(--bg)', border: `1px solid ${isOrder ? 'rgba(92,255,180,0.3)' : 'var(--border)'}`, borderRadius: 8, cursor: 'pointer', transition: 'all 0.2s' }}
+      <div
         onClick={() => setIsOrder(v => !v)}
+        style={{ marginBottom: 20, display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', background: isOrder ? 'rgba(92,255,180,0.08)' : 'var(--bg)', border: `1px solid ${isOrder ? '#5cffb8' : 'var(--border)'}`, borderRadius: 8, cursor: 'pointer', transition: 'all 0.2s' }}
       >
         <div style={{ width: 20, height: 20, borderRadius: 5, border: `2px solid ${isOrder ? '#5cffb8' : 'var(--muted)'}`, background: isOrder ? '#5cffb8' : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, transition: 'all 0.2s' }}>
-          {isOrder && <span style={{ color: '#0d0e10', fontSize: 13, fontWeight: 900, lineHeight: 1 }}>✓</span>}
+          {isOrder && <span style={{ color: '#0d0e10', fontSize: 13, fontWeight: 900 }}>✓</span>}
         </div>
         <div>
           <div style={{ fontSize: 14, fontWeight: 700, color: isOrder ? '#5cffb8' : 'var(--text)' }}>Zamówienie</div>
-          <div style={{ fontSize: 11, fontFamily: 'var(--mono)', color: 'var(--muted)', marginTop: 2 }}>
-            Aktualizuje „Ostatnie zamówienie" na dzisiejszą datę
-          </div>
+          <div style={{ fontSize: 11, fontFamily: 'var(--mono)', color: 'var(--muted)', marginTop: 2 }}>Aktualizuje „Ostatnie zamówienie" na datę spotkania</div>
         </div>
       </div>
+
+      {savedMsg && (
+        <div style={{ marginBottom: 12, padding: '10px 14px', borderRadius: 8, background: savedMsg.includes('Błąd') ? 'rgba(255,92,92,0.1)' : 'rgba(212,255,92,0.1)', border: `1px solid ${savedMsg.includes('Błąd') ? 'var(--danger)' : 'var(--accent)'}`, fontSize: 13, color: savedMsg.includes('Błąd') ? 'var(--danger)' : 'var(--accent)', fontFamily: 'var(--mono)' }}>
+          {savedMsg}
+        </div>
+      )}
 
       <button
         onClick={handleSave}
         disabled={!canSave}
-        style={{ width: '100%', padding: '13px 24px', borderRadius: 8, border: 'none', background: 'var(--accent)', color: '#0d0e10', fontFamily: 'var(--sans)', fontSize: 15, fontWeight: 700, cursor: canSave ? 'pointer' : 'not-allowed', opacity: canSave ? 1 : 0.5, transition: 'all 0.2s' }}
+        style={{ width: '100%', padding: '13px 24px', borderRadius: 8, border: 'none', background: 'var(--accent)', color: '#0d0e10', fontFamily: 'var(--sans)', fontSize: 15, fontWeight: 700, cursor: canSave ? 'pointer' : 'not-allowed', opacity: canSave ? 1 : 0.5 }}
       >
         {saving ? 'Zapisywanie...' : 'Zapisz spotkanie'}
       </button>
