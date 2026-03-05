@@ -45,9 +45,9 @@ export default function App() {
         ...client,
         lastVisit: date,
         notes: [{ date, text: note, sample }, ...(client.notes || [])],
+        stage: stage || client.stage,
+        chance: (chance !== '' && chance !== undefined) ? chance : client.chance,
         ...(sample !== '' ? { sample } : {}),
-        ...(stage !== '' ? { stage } : {}),
-        ...(chance !== '' && chance !== undefined ? { chance } : {}),
         ...(isOrder ? { lastOrder: date } : {}),
       }
       await save(updated)
