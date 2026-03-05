@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import Modal from './Modal'
 import StageBadge from './StageBadge'
 import { formatDate } from '../utils'
@@ -12,12 +12,25 @@ function DetailItem({ label, children }) {
   )
 }
 
-export default function ClientDetail({ open, onClose, client, onEdit, onDelete, onAddToPlanned, plannedIds }) {
-  if (!client) return null
+export default function ClientDetail({ open, onClose, client, onEdit, onDelete }) {
+  const [inPlan, setInPlan] = useState(false)
 
-  const ids = Array.isArray(plannedIds) ? plannedIds : []
-  const inPlan = ids.includes(client.id)
+  useEffect(() => {
+    if (client) {
+      setInPlan(typeof window.__dayPlannerHas === 'function' ? window.__dayPlannerHas(client.id) : false)
+    }
+  }, [client, open])
+
+  if (!client) return null
   const notes = client.notes || []
+
+  const handleAddToPlan = () => {
+    if (typeof window.__dayPlannerAdd === 'function') {
+      window.__dayPlannerAdd(client)
+      setInPlan(true)
+      onClose()
+    }
+  }
 
   return (
     <Modal open={open} onClose={onClose} maxWidth={780}>
@@ -73,12 +86,13 @@ export default function ClientDetail({ open, onClose, client, onEdit, onDelete, 
         </button>
 
         <button
-          onClick={() => { if (!inPlan && onAddToPlanned) { onAddToPlanned(client); onClose() } }}
+          onClick={inPlan ? undefined : handleAddToPlan}
           style={{
-            padding: '10px 18px', borderRadius: 8, fontFamily: 'var(--sans)', fontSize: 13, fontWeight: 700, cursor: inPlan ? 'default' : 'pointer',
+            padding: '10px 18px', borderRadius: 8, fontFamily: 'var(--sans)', fontSize: 13, fontWeight: 700,
             border: inPlan ? '1px solid var(--border)' : '1px solid var(--accent2)',
             background: inPlan ? 'var(--surface2)' : 'rgba(92,170,255,0.12)',
             color: inPlan ? 'var(--muted)' : 'var(--accent2)',
+            cursor: inPlan ? 'default' : 'pointer',
             opacity: inPlan ? 0.6 : 1,
           }}
         >
