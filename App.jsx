@@ -15,14 +15,16 @@ export default function App() {
   const [formOpen, setFormOpen] = useState(false)
   const [editClient, setEditClient] = useState(null)
   const [detailClient, setDetailClient] = useState(null)
-  const [dayPlan, setDayPlan] = useState([])
+  const [planned, setPlanned] = useState([])
 
-  const addToDayPlan = (c) => {
-    if (dayPlan.find(x => x.id === c.id)) {
+  const plannedIds = planned.map(c => c.id)
+
+  const addToPlanned = (c) => {
+    if (planned.find(x => x.id === c.id)) {
       toast(`${c.name} już jest w planie dnia`, true)
       return
     }
-    setDayPlan(prev => [...prev, c])
+    setPlanned(prev => [...prev, c])
     toast(`${c.name} dodany do planu dnia ✓`)
   }
 
@@ -33,7 +35,7 @@ export default function App() {
       setFormOpen(false)
       setEditClient(null)
       if (detailClient?.id === form.id) setDetailClient(null)
-    } catch (e) {
+    } catch {
       toast('Błąd zapisu — sprawdź połączenie', true)
     }
   }
@@ -112,11 +114,9 @@ export default function App() {
   })
 
   const utilBtn = {
-    padding: '8px 16px', borderRadius: 6,
-    border: '1px solid var(--border)',
+    padding: '8px 16px', borderRadius: 6, border: '1px solid var(--border)',
     background: 'transparent', color: 'var(--muted)',
-    fontFamily: 'var(--sans)', fontSize: 13, fontWeight: 600,
-    cursor: 'pointer', transition: 'all 0.2s',
+    fontFamily: 'var(--sans)', fontSize: 13, fontWeight: 600, cursor: 'pointer',
   }
 
   return (
@@ -128,10 +128,7 @@ export default function App() {
         <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
           <button style={navBtn(view === 'home')} onClick={() => setView('home')}>Pulpit</button>
           <button style={navBtn(view === 'clients')} onClick={() => setView('clients')}>Klienci</button>
-          <button
-            style={{ ...navBtn(false), background: 'var(--accent)', color: '#0d0e10' }}
-            onClick={() => { setEditClient(null); setFormOpen(true) }}
-          >
+          <button style={{ ...navBtn(false), background: 'var(--accent)', color: '#0d0e10' }} onClick={() => { setEditClient(null); setFormOpen(true) }}>
             + Nowy klient
           </button>
           <div style={{ width: 1, height: 24, background: 'var(--border)', margin: '0 4px' }} />
@@ -152,8 +149,8 @@ export default function App() {
           clients={clients}
           onMeetingSave={handleMeetingSave}
           onClientClick={openDetail}
-          dayPlan={dayPlan}
-          setDayPlan={setDayPlan}
+          planned={planned}
+          setPlanned={setPlanned}
         />
       )}
 
@@ -184,8 +181,8 @@ export default function App() {
         client={detailClient}
         onEdit={openEdit}
         onDelete={handleDeleteClient}
-        onAddToDayPlan={addToDayPlan}
-        dayPlanIds={dayPlan.map(c => c.id)}
+        onAddToPlanned={addToPlanned}
+        plannedIds={plannedIds}
       />
 
       <ToastContainer toasts={toasts} />
