@@ -9,7 +9,7 @@ const inp = {
   fontSize: 14, padding: '10px 14px', outline: 'none',
 }
 
-export default function DayPlanner({ clients }) {
+export default function DayPlanner({ clients, onClientClick }) {
   const [list, setList] = useState([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
@@ -173,9 +173,15 @@ export default function DayPlanner({ clients }) {
               <div style={{ width: 26, height: 26, borderRadius: '50%', background: 'var(--accent)', color: '#0d0e10', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 800, flexShrink: 0 }}>
                 {idx + 1}
               </div>
-              {/* Info */}
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 14, fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.name}</div>
+              {/* Info - clickable */}
+              <div
+                onClick={() => onClientClick && onClientClick(c)}
+                style={{ flex: 1, minWidth: 0, cursor: onClientClick ? 'pointer' : 'default' }}
+              >
+                <div style={{ fontSize: 14, fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: 'var(--text)' }}
+                  onMouseEnter={e => { if (onClientClick) e.currentTarget.style.color = 'var(--accent)' }}
+                  onMouseLeave={e => { e.currentTarget.style.color = 'var(--text)' }}
+                >{c.name}</div>
                 {c.address && <div style={{ fontSize: 11, color: 'var(--muted)', fontFamily: 'var(--mono)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginTop: 2 }}>{c.address}</div>}
                 {c.lastVisit && <div style={{ fontSize: 10, color: 'var(--muted)', fontFamily: 'var(--mono)', marginTop: 2 }}>ost. wizyta: {formatDate(c.lastVisit)}</div>}
               </div>

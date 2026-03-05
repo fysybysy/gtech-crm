@@ -39,15 +39,16 @@ export default function App() {
     }
   }
 
-  const handleMeetingSave = async ({ client, date, note, sample, stage, chance }) => {
+  const handleMeetingSave = async ({ client, date, note, sample, stage, chance, isOrder }) => {
     try {
       const updated = {
         ...client,
         lastVisit: date,
         notes: [{ date, text: note, sample }, ...(client.notes || [])],
-        ...(sample ? { sample } : {}),
-        ...(stage ? { stage } : {}),
+        ...(sample !== '' ? { sample } : {}),
+        ...(stage !== '' ? { stage } : {}),
         ...(chance !== '' && chance !== undefined ? { chance } : {}),
+        ...(isOrder ? { lastOrder: date } : {}),
       }
       await save(updated)
       toast(`Spotkanie z ${client.name} zapisane ✓`)

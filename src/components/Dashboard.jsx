@@ -29,7 +29,7 @@ export default function Dashboard({ clients, onMeetingSave, onClientClick }) {
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24, maxWidth: 1100 }}>
         <MeetingPanel clients={safe} onSave={onMeetingSave} />
-        <DayPlanner clients={safe} />
+        <DayPlanner clients={safe} onClientClick={onClientClick} />
       </div>
 
       <AlertPanels clients={safe} onClientClick={onClientClick} />
