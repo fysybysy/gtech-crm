@@ -14,7 +14,9 @@ const app = initializeApp(firebaseConfig)
 export const db = getFirestore(app)
 
 const COLL = 'clients'
+const PLAN_DOC = doc(getFirestore(app), 'dayplan', 'current')
 
+// ── Clients ──────────────────────────────────────────────
 export async function getAllClients() {
   const snap = await getDocs(collection(db, COLL))
   return snap.docs.map(d => ({ ...d.data(), id: d.id }))
@@ -39,4 +41,19 @@ export async function saveClient(obj) {
 
 export async function deleteClient(id) {
   await deleteDoc(doc(db, COLL, id))
+}
+
+// ── Day Plan ─────────────────────────────────────────────
+export async function getDayPlan() {
+  try {
+    const snap = await getDoc(PLAN_DOC)
+    if (!snap.exists()) return []
+    return snap.data().items || []
+  } catch {
+    return []
+  }
+}
+
+export async function saveDayPlan(items) {
+  await setDoc(PLAN_DOC, { items, updatedAt: new Date().toISOString() })
 }
