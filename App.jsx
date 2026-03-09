@@ -5,6 +5,7 @@ import Dashboard from './components/Dashboard'
 import ClientsTable from './components/ClientsTable'
 import ClientForm from './components/ClientForm'
 import ClientDetail from './components/ClientDetail'
+import NotesPanel from './components/NotesPanel'
 import ToastContainer from './components/Toast'
 
 export default function App() {
@@ -39,16 +40,15 @@ export default function App() {
     }
   }
 
-  const handleMeetingSave = async ({ client, date, note, sample, stage, chance, isOrder }) => {
+  const handleMeetingSave = async ({ client, date, note, sample, stage, chance }) => {
     try {
       const updated = {
         ...client,
         lastVisit: date,
-        notes: [{ date, text: note, sample }, ...(client.notes || [])],
         stage: stage || client.stage,
         chance: (chance !== '' && chance !== undefined) ? chance : client.chance,
+        notes: [{ date, text: note, sample }, ...(client.notes || [])],
         ...(sample !== '' ? { sample } : {}),
-        ...(isOrder ? { lastOrder: date } : {}),
       }
       await save(updated)
       toast(`Spotkanie z ${client.name} zapisane ✓`)
@@ -98,6 +98,7 @@ export default function App() {
         <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
           <button style={navBtn(view === 'home')} onClick={() => setView('home')}>Pulpit</button>
           <button style={navBtn(view === 'clients')} onClick={() => setView('clients')}>Klienci</button>
+          <button style={navBtn(view === 'notes')} onClick={() => setView('notes')}>Notes</button>
           <button style={{ ...navBtn(false), background: 'var(--accent)', color: '#0d0e10' }} onClick={() => { setEditClient(null); setFormOpen(true) }}>+ Nowy klient</button>
           <div style={{ width: 1, height: 24, background: 'var(--border)', margin: '0 4px' }} />
           <button style={utilBtn} onClick={handleImport}>↑ Importuj</button>
@@ -121,6 +122,8 @@ export default function App() {
           <ClientsTable clients={clients} loading={loading} onRowClick={openDetail} onEdit={openEdit} onAdd={() => { setEditClient(null); setFormOpen(true) }} />
         </div>
       )}
+
+      {view === 'notes' && <NotesPanel />}
 
       <ClientForm open={formOpen} onClose={() => { setFormOpen(false); setEditClient(null) }} onSave={handleSaveClient} initial={editClient} />
       <ClientDetail open={!!detailClient} onClose={() => setDetailClient(null)} client={detailClient} onEdit={openEdit} onDelete={handleDeleteClient} />

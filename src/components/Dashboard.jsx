@@ -2,7 +2,6 @@ import React from 'react'
 import MeetingPanel from './MeetingPanel'
 import DayPlanner from './DayPlanner'
 import AlertPanels from './AlertPanels'
-import NotesPanel from './NotesPanel'
 
 function StatCard({ label, value, color }) {
   return (
@@ -34,7 +33,6 @@ export default function Dashboard({ clients, onMeetingSave, onClientClick }) {
 
       <AlertPanels clients={safe} onClientClick={onClientClick} />
 
-      <NotesPanel />
     </div>
   )
 }
