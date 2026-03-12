@@ -93,16 +93,16 @@ export default function App() {
 
   return (
     <>
-      <header style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '18px 40px', borderBottom: '1px solid var(--border)', background: 'var(--surface)', position: 'sticky', top: 0, zIndex: 100 }}>
-        <div style={{ fontSize: 22, fontWeight: 800, letterSpacing: -0.5 }}>G-TECH<span style={{ color: 'var(--accent)' }}>.</span>crm</div>
-        <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
+      <header style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '18px 40px', borderBottom: '1px solid var(--border)', background: 'var(--surface)', position: 'sticky', top: 0, zIndex: 100, className: 'header-nav' }}>
+        <div className="header-logo" style={{ fontSize: 22, fontWeight: 800, letterSpacing: -0.5 }}>G-TECH<span style={{ color: 'var(--accent)' }}>.</span>crm</div>
+        <div className="header-btns" style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
           <button style={navBtn(view === 'home')} onClick={() => setView('home')}>Pulpit</button>
           <button style={navBtn(view === 'clients')} onClick={() => setView('clients')}>Klienci</button>
-          <button style={navBtn(view === 'notes')} onClick={() => setView('notes')}>Notes</button>
+          <button className="nav-notes" style={navBtn(view === 'notes')} onClick={() => setView('notes')}>Notes</button>
           <button style={{ ...navBtn(false), background: 'var(--accent)', color: '#0d0e10' }} onClick={() => { setEditClient(null); setFormOpen(true) }}>+ Nowy klient</button>
           <div style={{ width: 1, height: 24, background: 'var(--border)', margin: '0 4px' }} />
-          <button style={utilBtn} onClick={handleImport}>↑ Importuj</button>
-          <button style={utilBtn} onClick={handleExport}>↓ Eksportuj</button>
+          <button className="header-util" style={utilBtn} onClick={handleImport}>↑ Importuj</button>
+          <button className="header-util" style={utilBtn} onClick={handleExport}>↓ Eksportuj</button>
         </div>
       </header>
 
@@ -116,8 +116,8 @@ export default function App() {
       {view === 'home' && <Dashboard clients={clients} onMeetingSave={handleMeetingSave} onClientClick={openDetail} />}
 
       {view === 'clients' && (
-        <div style={{ padding: 40 }}>
-          <div style={{ fontSize: 32, fontWeight: 800, marginBottom: 8, letterSpacing: -1 }}>Lista klientów</div>
+        <div className="page-padding" style={{ padding: 40 }}>
+          <div className="page-title" style={{ fontSize: 32, fontWeight: 800, marginBottom: 8, letterSpacing: -1 }}>Lista klientów</div>
           <div style={{ color: 'var(--muted)', fontSize: 14, marginBottom: 32, fontFamily: 'var(--mono)' }}>// Wszystkie rekordy — filtruj, sortuj, edytuj</div>
           <ClientsTable clients={clients} loading={loading} onRowClick={openDetail} onEdit={openEdit} onAdd={() => { setEditClient(null); setFormOpen(true) }} />
         </div>

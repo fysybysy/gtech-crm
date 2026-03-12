@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import Modal from './Modal'
 import StageBadge from './StageBadge'
 import { formatDate } from '../utils'
+import { getDayPlan, saveDayPlan } from '../firebase'
 
 function DetailItem({ label, children }) {
   return (
@@ -14,21 +15,34 @@ function DetailItem({ label, children }) {
 
 export default function ClientDetail({ open, onClose, client, onEdit, onDelete }) {
   const [inPlan, setInPlan] = useState(false)
+  const [adding, setAdding] = useState(false)
 
   useEffect(() => {
-    if (client) {
-      setInPlan(typeof window.__dayPlannerHas === 'function' ? window.__dayPlannerHas(client.id) : false)
+    if (client && open) {
+      getDayPlan().then(items => {
+        setInPlan(Array.isArray(items) && items.some(x => x.id === client.id))
+      })
     }
   }, [client, open])
 
   if (!client) return null
   const notes = client.notes || []
 
-  const handleAddToPlan = () => {
-    if (typeof window.__dayPlannerAdd === 'function') {
-      window.__dayPlannerAdd(client)
+  const handleAddToPlan = async () => {
+    if (inPlan || adding) return
+    setAdding(true)
+    try {
+      const current = await getDayPlan()
+      const list = Array.isArray(current) ? current : []
+      if (!list.find(x => x.id === client.id)) {
+        await saveDayPlan([...list, client])
+      }
       setInPlan(true)
       onClose()
+    } catch (e) {
+      console.error('Error adding to plan:', e)
+    } finally {
+      setAdding(false)
     }
   }
 
@@ -84,21 +98,13 @@ export default function ClientDetail({ open, onClose, client, onEdit, onDelete }
         <button onClick={() => onDelete(client.id)} style={{ padding: '10px 16px', borderRadius: 8, border: '1px solid var(--danger)', background: 'transparent', color: 'var(--danger)', fontFamily: 'var(--sans)', fontSize: 13, fontWeight: 700, cursor: 'pointer', marginRight: 'auto' }}>
           Usuń
         </button>
-
         <button
-          onClick={inPlan ? undefined : handleAddToPlan}
-          style={{
-            padding: '10px 18px', borderRadius: 8, fontFamily: 'var(--sans)', fontSize: 13, fontWeight: 700,
-            border: inPlan ? '1px solid var(--border)' : '1px solid var(--accent2)',
-            background: inPlan ? 'var(--surface2)' : 'rgba(92,170,255,0.12)',
-            color: inPlan ? 'var(--muted)' : 'var(--accent2)',
-            cursor: inPlan ? 'default' : 'pointer',
-            opacity: inPlan ? 0.6 : 1,
-          }}
+          onClick={handleAddToPlan}
+          disabled={inPlan || adding}
+          style={{ padding: '10px 18px', borderRadius: 8, fontFamily: 'var(--sans)', fontSize: 13, fontWeight: 700, cursor: inPlan || adding ? 'default' : 'pointer', border: inPlan ? '1px solid var(--border)' : '1px solid var(--accent2)', background: inPlan ? 'var(--surface2)' : 'rgba(92,170,255,0.12)', color: inPlan ? 'var(--muted)' : 'var(--accent2)', opacity: inPlan || adding ? 0.6 : 1 }}
         >
-          {inPlan ? '✓ W planie dnia' : '📅 Dodaj do planu dnia'}
+          {adding ? '...' : inPlan ? '✓ W planie dnia' : '📅 Dodaj do planu dnia'}
         </button>
-
         <button onClick={onClose} style={{ padding: '10px 20px', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--surface2)', color: 'var(--text)', fontFamily: 'var(--sans)', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>
           Zamknij
         </button>
