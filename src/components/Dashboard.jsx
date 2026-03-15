@@ -26,7 +26,7 @@ export default function Dashboard({ clients, onMeetingSave, onClientClick }) {
         <StatCard label="Aktywni klienci" value={safe.filter(c => c.stage === 'Klient').length} color="var(--accent)" />
       </div>
 
-      <div className="dashboard-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, maxWidth: 1100 }}>
+      <div className="responsive-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, maxWidth: 1100 }}>
         <MeetingPanel clients={safe} onSave={onMeetingSave} />
         <DayPlanner clients={safe} onClientClick={onClientClick} />
       </div>
