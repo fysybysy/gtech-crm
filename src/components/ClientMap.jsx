@@ -78,7 +78,7 @@ export default function ClientMap({ clients, onClientClick, onAddClient }) {
   useEffect(() => {
     if (!leafletLoaded || !mapRef.current || leafletMap.current) return
     const L = window.L
-    const map = L.map(mapRef.current, { zoomControl: true }).setView([52.069, 19.480], 6)
+    const map = L.map(mapRef.current, { zoomControl: true }).setView([51.2465, 22.5684], 12)
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '© OpenStreetMap contributors', maxZoom: 19
     }).addTo(map)
