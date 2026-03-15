@@ -16,28 +16,21 @@ export default function App() {
   const [formOpen, setFormOpen] = useState(false)
   const [editClient, setEditClient] = useState(null)
   const [detailClient, setDetailClient] = useState(null)
+  const [menuOpen, setMenuOpen] = useState(false)
 
   const handleSaveClient = async (form) => {
     try {
       await save(form)
       toast(form.id ? 'Klient zaktualizowany ✓' : 'Klient dodany ✓')
-      setFormOpen(false)
-      setEditClient(null)
+      setFormOpen(false); setEditClient(null)
       if (detailClient?.id === form.id) setDetailClient(null)
-    } catch {
-      toast('Błąd zapisu — sprawdź połączenie', true)
-    }
+    } catch { toast('Błąd zapisu — sprawdź połączenie', true) }
   }
 
   const handleDeleteClient = async (id) => {
-    if (!confirm('Czy na pewno chcesz usunąć tego klienta? Tej operacji nie można cofnąć.')) return
-    try {
-      await remove(id)
-      toast('Klient usunięty')
-      setDetailClient(null)
-    } catch {
-      toast('Błąd usuwania', true)
-    }
+    if (!confirm('Czy na pewno chcesz usunąć tego klienta?')) return
+    try { await remove(id); toast('Klient usunięty'); setDetailClient(null) }
+    catch { toast('Błąd usuwania', true) }
   }
 
   const handleMeetingSave = async ({ client, date, note, sample, stage, chance }) => {
@@ -52,9 +45,7 @@ export default function App() {
       }
       await save(updated)
       toast(`Spotkanie z ${client.name} zapisane ✓`)
-    } catch {
-      toast('Błąd zapisu spotkania', true)
-    }
+    } catch { toast('Błąd zapisu spotkania', true) }
   }
 
   const openEdit = (c) => { setEditClient(c); setDetailClient(null); setFormOpen(true) }
@@ -83,28 +74,77 @@ export default function App() {
     input.click()
   }
 
+  const navTo = (v) => { setView(v); setMenuOpen(false) }
+
   const navBtn = (active) => ({
-    padding: '8px 20px', borderRadius: 6, border: 'none',
+    padding: '8px 18px', borderRadius: 6, border: 'none',
     background: active ? 'var(--accent)' : 'transparent',
     color: active ? '#0d0e10' : 'var(--muted)',
     fontFamily: 'var(--sans)', fontSize: 14, fontWeight: 600, cursor: 'pointer',
   })
-  const utilBtn = { padding: '8px 16px', borderRadius: 6, border: '1px solid var(--border)', background: 'transparent', color: 'var(--muted)', fontFamily: 'var(--sans)', fontSize: 13, fontWeight: 600, cursor: 'pointer' }
+  const utilBtn = { padding: '8px 14px', borderRadius: 6, border: '1px solid var(--border)', background: 'transparent', color: 'var(--muted)', fontFamily: 'var(--sans)', fontSize: 13, fontWeight: 600, cursor: 'pointer' }
 
   return (
     <>
-      <header style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '18px 40px', borderBottom: '1px solid var(--border)', background: 'var(--surface)', position: 'sticky', top: 0, zIndex: 100, className: 'header-nav' }}>
-        <div className="header-logo" style={{ fontSize: 22, fontWeight: 800, letterSpacing: -0.5 }}>G-TECH<span style={{ color: 'var(--accent)' }}>.</span>crm</div>
-        <div className="header-btns" style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
-          <button style={navBtn(view === 'home')} onClick={() => setView('home')}>Pulpit</button>
-          <button style={navBtn(view === 'clients')} onClick={() => setView('clients')}>Klienci</button>
-          <button className="nav-notes" style={navBtn(view === 'notes')} onClick={() => setView('notes')}>Notes</button>
-          <button style={{ ...navBtn(false), background: 'var(--accent)', color: '#0d0e10' }} onClick={() => { setEditClient(null); setFormOpen(true) }}>+ Nowy klient</button>
-          <div style={{ width: 1, height: 24, background: 'var(--border)', margin: '0 4px' }} />
+      {/* Header */}
+      <header className="header-nav" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 40px', height: 60, borderBottom: '1px solid var(--border)', background: 'var(--surface)', position: 'sticky', top: 0, zIndex: 100 }}>
+        <div className="header-logo" style={{ fontSize: 20, fontWeight: 800, letterSpacing: -0.5, flexShrink: 0 }}>
+          G-TECH<span style={{ color: 'var(--accent)' }}>.</span>crm
+        </div>
+
+        {/* Desktop nav */}
+        <div className="desktop-nav" style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
+          <button style={navBtn(view === 'home')} onClick={() => navTo('home')}>Pulpit</button>
+          <button style={navBtn(view === 'clients')} onClick={() => navTo('clients')}>Klienci</button>
+          <button style={navBtn(view === 'notes')} onClick={() => navTo('notes')}>Notes</button>
+          <button
+            className="header-add-btn"
+            style={{ ...navBtn(false), background: 'var(--accent)', color: '#0d0e10', marginLeft: 4 }}
+            onClick={() => { setEditClient(null); setFormOpen(true) }}
+          >
+            + Nowy klient
+          </button>
+          <div className="header-divider" style={{ width: 1, height: 24, background: 'var(--border)', margin: '0 4px' }} />
           <button className="header-util" style={utilBtn} onClick={handleImport}>↑ Importuj</button>
           <button className="header-util" style={utilBtn} onClick={handleExport}>↓ Eksportuj</button>
         </div>
+
+        {/* Mobile: add + hamburger */}
+        <div className="mobile-nav" style={{ display: 'none', alignItems: 'center', gap: 8 }}>
+          <button
+            onClick={() => { setEditClient(null); setFormOpen(true) }}
+            style={{ padding: '7px 12px', borderRadius: 6, border: 'none', background: 'var(--accent)', color: '#0d0e10', fontFamily: 'var(--sans)', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}
+          >
+            + Nowy
+          </button>
+          <button
+            onClick={() => setMenuOpen(v => !v)}
+            style={{ width: 38, height: 38, borderRadius: 8, border: '1px solid var(--border)', background: 'var(--surface2)', color: 'var(--text)', fontSize: 18, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+          >
+            {menuOpen ? '✕' : '☰'}
+          </button>
+        </div>
       </header>
+
+      {/* Mobile dropdown menu */}
+      {menuOpen && (
+        <div style={{ position: 'fixed', top: 56, left: 0, right: 0, zIndex: 99, background: 'var(--surface)', borderBottom: '1px solid var(--border)', display: 'flex', flexDirection: 'column', padding: 12, gap: 6 }}>
+          {[['home','🏠 Pulpit'],['clients','👥 Klienci'],['notes','📝 Notes']].map(([v, label]) => (
+            <button
+              key={v}
+              onClick={() => navTo(v)}
+              style={{ padding: '12px 16px', borderRadius: 8, border: 'none', background: view === v ? 'var(--accent)' : 'var(--surface2)', color: view === v ? '#0d0e10' : 'var(--text)', fontFamily: 'var(--sans)', fontSize: 15, fontWeight: 600, cursor: 'pointer', textAlign: 'left' }}
+            >
+              {label}
+            </button>
+          ))}
+          <div style={{ height: 1, background: 'var(--border)', margin: '4px 0' }} />
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button onClick={() => { handleImport(); setMenuOpen(false) }} style={{ ...utilBtn, flex: 1 }}>↑ Importuj</button>
+            <button onClick={() => { handleExport(); setMenuOpen(false) }} style={{ ...utilBtn, flex: 1 }}>↓ Eksportuj</button>
+          </div>
+        </div>
+      )}
 
       {loading && (
         <div style={{ height: 3, background: 'var(--border)', position: 'relative', overflow: 'hidden' }}>
@@ -118,7 +158,7 @@ export default function App() {
       {view === 'clients' && (
         <div className="page-padding" style={{ padding: 40 }}>
           <div className="page-title" style={{ fontSize: 32, fontWeight: 800, marginBottom: 8, letterSpacing: -1 }}>Lista klientów</div>
-          <div style={{ color: 'var(--muted)', fontSize: 14, marginBottom: 32, fontFamily: 'var(--mono)' }}>// Wszystkie rekordy — filtruj, sortuj, edytuj</div>
+          <div className="page-subtitle" style={{ color: 'var(--muted)', fontSize: 14, marginBottom: 32, fontFamily: 'var(--mono)' }}>// Wszystkie rekordy — filtruj, sortuj, edytuj</div>
           <ClientsTable clients={clients} loading={loading} onRowClick={openDetail} onEdit={openEdit} onAdd={() => { setEditClient(null); setFormOpen(true) }} />
         </div>
       )}
