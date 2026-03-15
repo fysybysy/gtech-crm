@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react'
-import { todayISO, STAGES } from '../utils'
+import { todayISO, STAGES, matchSearch } from '../utils'
 import StageBadge from './StageBadge'
 import { saveClient } from '../firebase'
 
@@ -24,8 +24,8 @@ export default function MeetingPanel({ clients, onSaved }) {
   const safeClients = Array.isArray(clients) ? clients : []
   const filtered = search.trim()
     ? safeClients.filter(c =>
-        c.name.toLowerCase().includes(search.toLowerCase()) ||
-        (c.address || '').toLowerCase().includes(search.toLowerCase())
+        matchSearch(c.name, search) ||
+        matchSearch(c.address || '', search)
       )
     : safeClients
 

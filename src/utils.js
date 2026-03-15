@@ -28,3 +28,20 @@ export function formatDate(d) {
 export function todayISO() {
   return new Date().toISOString().split('T')[0]
 }
+
+// ── Normalizacja tekstu — ignoruje polskie znaki ──────────
+// "Łódź" === "lodz", "żółw" === "zolw" itd.
+export function normalize(str) {
+  if (!str) return ''
+  return str
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/ł/g, 'l')   // ł → l (NFD nie rozkłada ł)
+    .replace(/[̀-ͯ]/g, '') // usuwa diakrytyki po NFD
+    .replace(/Ł/g, 'l')   // Ł → l
+}
+
+// Sprawdza czy haystack zawiera needle (oba znormalizowane)
+export function matchSearch(haystack, needle) {
+  return normalize(haystack).includes(normalize(needle))
+}

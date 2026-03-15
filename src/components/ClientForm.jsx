@@ -3,7 +3,7 @@ import Modal from './Modal'
 import { STAGES } from '../utils'
 
 const EMPTY = {
-  name: '', address: '', lastVisit: '', lastContact: '',
+  name: '', address: '', lastVisit: '',
   lastOrder: '', stage: '1 Wizyta', chance: '', sample: '', note: '',
 }
 
@@ -52,15 +52,9 @@ export default function ClientForm({ open, onClose, onSave, initial }) {
         <input style={input} value={form.address} onChange={e => set('address', e.target.value)} placeholder="ul. Przykładowa 1, 00-000 Warszawa" />
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-        <div style={fgroup}>
-          <label style={label}>Ostatnia wizyta</label>
-          <input style={input} type="date" value={form.lastVisit} onChange={e => set('lastVisit', e.target.value)} />
-        </div>
-        <div style={fgroup}>
-          <label style={label}>Ostatni kontakt</label>
-          <input style={input} type="date" value={form.lastContact} onChange={e => set('lastContact', e.target.value)} />
-        </div>
+      <div style={fgroup}>
+        <label style={label}>Ostatnia wizyta</label>
+        <input style={input} type="date" value={form.lastVisit} onChange={e => set('lastVisit', e.target.value)} />
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>

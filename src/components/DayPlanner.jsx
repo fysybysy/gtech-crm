@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react'
 import StageBadge from './StageBadge'
-import { formatDate } from '../utils'
+import { formatDate, matchSearch } from '../utils'
 import { getDayPlan, saveDayPlan } from '../firebase'
 
 const inp = {
@@ -55,8 +55,8 @@ export default function DayPlanner({ clients, onClientClick }) {
   const q = search.trim().toLowerCase()
   const filtered = q
     ? safeClients.filter(c =>
-        c.name.toLowerCase().includes(q) ||
-        (c.address || '').toLowerCase().includes(q)
+        matchSearch(c.name, search) ||
+        matchSearch(c.address || '', search)
       )
     : []
 

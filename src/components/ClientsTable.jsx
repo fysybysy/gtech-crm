@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react'
 import StageBadge from './StageBadge'
-import { STAGES, formatDate } from '../utils'
+import { STAGES, formatDate, matchSearch } from '../utils'
 
 function ChanceBar({ value }) {
   const n = Number(value) || 0
@@ -30,8 +30,8 @@ export default function ClientsTable({ clients, loading, onRowClick, onEdit, onA
   const filtered = useMemo(() => {
     let list = clients
     if (search.trim()) list = list.filter(c =>
-      c.name.toLowerCase().includes(search.toLowerCase()) ||
-      (c.address || '').toLowerCase().includes(search.toLowerCase())
+      matchSearch(c.name, search) ||
+      matchSearch(c.address || '', search)
     )
     if (stageFilter) list = list.filter(c => c.stage === stageFilter)
     return [...list].sort((a, b) => {

@@ -1,11 +1,13 @@
 @import url('https://fonts.googleapis.com/css2?family=Lato:wght@400;700;900&family=DM+Mono:wght@400;500&display=swap');
 
+/* ── Dark theme (default) ─────────────────────────────── */
 :root {
   --bg: #0d0e10;
   --surface: #14161a;
   --surface2: #1c1f25;
   --border: #252830;
   --accent: #d4ff5c;
+  --accent-text: #0d0e10;
   --accent2: #5caaff;
   --danger: #ff5c5c;
   --warn: #ffb85c;
@@ -13,6 +15,23 @@
   --muted: #5a5f6e;
   --mono: 'DM Mono', monospace;
   --sans: 'Lato', sans-serif;
+  --shadow: 0 2px 8px rgba(0,0,0,0.4);
+}
+
+/* ── Light theme ──────────────────────────────────────── */
+[data-theme="light"] {
+  --bg: #f4f5f7;
+  --surface: #ffffff;
+  --surface2: #eef0f3;
+  --border: #dde1e8;
+  --accent: #5a9e00;
+  --accent-text: #ffffff;
+  --accent2: #1a6fd4;
+  --danger: #d93025;
+  --warn: #d97706;
+  --text: #1a1d23;
+  --muted: #8a92a0;
+  --shadow: 0 2px 8px rgba(0,0,0,0.08);
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -113,4 +132,20 @@ button { min-height: 36px; }
 @media (max-width: 480px) {
   .stats-row > div { flex: 1 1 100% !important; }
   .detail-grid { grid-template-columns: 1fr !important; }
+}
+
+/* ── Light theme overrides ────────────────────────────── */
+[data-theme="light"] body {
+  background: var(--bg);
+  color: var(--text);
+}
+
+[data-theme="light"] .leaflet-container {
+  filter: none;
+}
+
+/* Accent button text in light mode */
+[data-theme="light"] button[style*="background: var(--accent)"],
+[data-theme="light"] button[style*="background:var(--accent)"] {
+  color: var(--accent-text) !important;
 }

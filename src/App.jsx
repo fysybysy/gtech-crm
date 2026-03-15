@@ -18,6 +18,15 @@ export default function App() {
   const [editClient, setEditClient] = useState(null)
   const [detailClient, setDetailClient] = useState(null)
   const [menuOpen, setMenuOpen] = useState(false)
+  const [theme, setTheme] = useState(() => localStorage.getItem('crm-theme') || 'dark')
+
+  // Apply theme to <html>
+  React.useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme)
+    localStorage.setItem('crm-theme', theme)
+  }, [theme])
+
+  const toggleTheme = () => setTheme(t => t === 'dark' ? 'light' : 'dark')
 
   const handleSaveClient = async (form) => {
     try {
@@ -106,6 +115,13 @@ export default function App() {
           >
             + Nowy klient
           </button>
+          <button
+            onClick={toggleTheme}
+            title={theme === 'dark' ? 'Włącz jasny motyw' : 'Włącz ciemny motyw'}
+            style={{ width: 36, height: 36, borderRadius: 8, border: '1px solid var(--border)', background: 'var(--surface2)', color: 'var(--text)', fontSize: 16, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', marginLeft: 4 }}
+          >
+            {theme === 'dark' ? '☀️' : '🌙'}
+          </button>
           <div className="header-divider" style={{ width: 1, height: 24, background: 'var(--border)', margin: '0 4px' }} />
           <button className="header-util" style={utilBtn} onClick={handleImport}>↑ Importuj</button>
           <button className="header-util" style={utilBtn} onClick={handleExport}>↓ Eksportuj</button>
@@ -145,6 +161,12 @@ export default function App() {
             <button onClick={() => { handleImport(); setMenuOpen(false) }} style={{ ...utilBtn, flex: 1 }}>↑ Importuj</button>
             <button onClick={() => { handleExport(); setMenuOpen(false) }} style={{ ...utilBtn, flex: 1 }}>↓ Eksportuj</button>
           </div>
+          <button
+            onClick={() => { toggleTheme(); setMenuOpen(false) }}
+            style={{ padding: '12px 16px', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--surface2)', color: 'var(--text)', fontFamily: 'var(--sans)', fontSize: 15, fontWeight: 600, cursor: 'pointer', textAlign: 'left' }}
+          >
+            {theme === 'dark' ? '☀️ Jasny motyw' : '🌙 Ciemny motyw'}
+          </button>
         </div>
       )}
 
