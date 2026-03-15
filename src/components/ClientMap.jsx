@@ -154,28 +154,27 @@ export default function ClientMap({ clients, onClientClick, onAddClient }) {
       markersRef.current[client.id] = marker
     }
 
+    // Step 1: instantly show all clients that already have coords
+    safe.forEach(client => {
+      if (client.address && client.lat && client.lng) {
+        addMarker(client, client.lat, client.lng)
+      }
+    })
+
+    // Step 2: geocode the rest in background
+    if (needsGeocode.length === 0) return
     ;(async () => {
-      if (needsGeocode.length > 0) setGeocoding(true)
+      setGeocoding(true)
       let count = 0
-
-      for (const client of safe) {
-        if (!client.address) continue
-
-        if (client.lat && client.lng) {
-          // ✓ Already has coords — use directly, no API call
-          addMarker(client, client.lat, client.lng)
-        } else {
-          // First time — geocode and save to Firebase
-          const coords = await geocodeAddress(client.address)
-          if (coords) {
-            addMarker(client, coords.lat, coords.lng)
-            // Save coords to Firebase so next time no geocoding needed
-            try {
-              await saveClient({ ...client, lat: coords.lat, lng: coords.lng })
-            } catch (e) { console.error('Could not save coords:', e) }
-            count++
-            setGeocodedCount(count)
-          }
+      for (const client of needsGeocode) {
+        const coords = await geocodeAddress(client.address)
+        if (coords) {
+          addMarker(client, coords.lat, coords.lng)
+          try {
+            await saveClient({ ...client, lat: coords.lat, lng: coords.lng })
+          } catch (e) { console.error('Could not save coords:', e) }
+          count++
+          setGeocodedCount(count)
         }
       }
       setGeocoding(false)

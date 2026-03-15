@@ -27,98 +27,51 @@ body {
 ::-webkit-scrollbar { width: 4px; height: 4px; }
 ::-webkit-scrollbar-track { background: var(--bg); }
 ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
-
 input, select, textarea, button { font-family: var(--sans); }
 button { min-height: 36px; }
 
-/* ─────────────────────────────────────────────────────────
-   RESPONSIVE GRID — używany przez Dashboard, AlertPanels
-   Na desktopie: 2 kolumny, na mobile: 1 kolumna
-───────────────────────────────────────────────────────── */
-.responsive-grid {
+/* ── Dashboard grid — 2 col desktop, 1 col mobile ─────── */
+.dash-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 20px;
+  width: 100%;
   max-width: 1100px;
 }
 
-/* ─────────────────────────────────────────────────────────
-   TABLET ≤ 1024px
-───────────────────────────────────────────────────────── */
+/* ── Tablet ≤ 1024px ──────────────────────────────────── */
 @media (max-width: 1024px) {
-  .responsive-grid {
-    grid-template-columns: 1fr !important;
-  }
-  .stats-row > div {
-    min-width: calc(50% - 8px) !important;
+  .dash-grid {
+    grid-template-columns: 1fr;
   }
 }
 
-/* ─────────────────────────────────────────────────────────
-   MOBILE ≤ 768px
-───────────────────────────────────────────────────────── */
+/* ── Mobile ≤ 768px ───────────────────────────────────── */
 @media (max-width: 768px) {
-
-  /* layout */
-  .responsive-grid {
-    grid-template-columns: 1fr !important;
-    gap: 14px !important;
-    max-width: 100% !important;
+  .dash-grid {
+    grid-template-columns: 1fr;
+    gap: 14px;
+    max-width: 100%;
   }
 
-  .page-padding {
-    padding: 16px !important;
-  }
-
-  .page-title {
-    font-size: 22px !important;
-  }
-
-  .page-subtitle {
-    font-size: 12px !important;
-    margin-bottom: 16px !important;
-  }
+  .page-padding { padding: 16px !important; }
+  .page-title { font-size: 22px !important; }
+  .page-subtitle { font-size: 12px !important; margin-bottom: 16px !important; }
 
   /* header */
-  .header-nav {
-    padding: 0 16px !important;
-    height: 56px !important;
-  }
-  .header-logo {
-    font-size: 17px !important;
-  }
-  .header-util {
-    display: none !important;
-  }
-  .header-divider {
-    display: none !important;
-  }
-  .desktop-nav {
-    display: none !important;
-  }
-  .mobile-nav {
-    display: flex !important;
-  }
+  .header-nav { padding: 0 16px !important; height: 56px !important; }
+  .header-logo { font-size: 17px !important; }
+  .header-util { display: none !important; }
+  .header-divider { display: none !important; }
+  .desktop-nav { display: none !important; }
+  .mobile-nav { display: flex !important; }
 
-  /* stats */
-  .stats-row {
-    gap: 10px !important;
-    margin-bottom: 16px !important;
-  }
-  .stats-row > div {
-    min-width: calc(50% - 5px) !important;
-    padding: 12px 14px !important;
-    flex: 1 1 calc(50% - 5px) !important;
-  }
-  .stats-value {
-    font-size: 22px !important;
-  }
+  /* stats — 2 per row */
+  .stats-row { gap: 10px !important; margin-bottom: 16px !important; }
+  .stats-row > div { flex: 1 1 calc(50% - 5px) !important; padding: 12px 14px !important; }
 
-  /* modal — slide up from bottom */
-  .modal-overlay {
-    padding: 0 !important;
-    align-items: flex-end !important;
-  }
+  /* modal slide up */
+  .modal-overlay { padding: 0 !important; align-items: flex-end !important; }
   .modal-inner {
     border-radius: 16px 16px 0 0 !important;
     max-height: 92vh !important;
@@ -127,36 +80,13 @@ button { min-height: 36px; }
     max-width: 100% !important;
   }
 
-  /* detail modal grid */
-  .detail-grid {
-    grid-template-columns: 1fr 1fr !important;
-    gap: 8px !important;
-  }
-
-  /* footer buttons in modal */
-  .footer-btns {
-    flex-wrap: wrap !important;
-    gap: 8px !important;
-  }
-  .footer-btns button {
-    flex: 1 1 auto !important;
-    min-width: 80px !important;
-  }
-  .footer-btns .btn-delete {
-    flex: 0 0 auto !important;
-    width: 100% !important;
-    order: 10 !important;
-  }
+  .detail-grid { grid-template-columns: 1fr 1fr !important; gap: 8px !important; }
+  .footer-btns { flex-wrap: wrap !important; gap: 8px !important; }
+  .footer-btns button { flex: 1 1 auto !important; }
 }
 
-/* ─────────────────────────────────────────────────────────
-   SMALL MOBILE ≤ 480px
-───────────────────────────────────────────────────────── */
+/* ── Small mobile ≤ 480px ─────────────────────────────── */
 @media (max-width: 480px) {
-  .stats-row > div {
-    min-width: calc(50% - 5px) !important;
-  }
-  .detail-grid {
-    grid-template-columns: 1fr !important;
-  }
+  .stats-row > div { flex: 1 1 100% !important; }
+  .detail-grid { grid-template-columns: 1fr !important; }
 }

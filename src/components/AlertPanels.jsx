@@ -91,7 +91,7 @@ export default function AlertPanels({ clients, onClientClick }) {
     : null
 
   return (
-    <div className="responsive-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, maxWidth: 1100, marginTop: 20 }}>
+    <div className="dash-grid" style={{ marginTop: 20 }}>
       <Panel
         title="Do ponownej wizyty"
         icon="🔔"
