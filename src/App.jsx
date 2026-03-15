@@ -6,6 +6,7 @@ import ClientsTable from './components/ClientsTable'
 import ClientForm from './components/ClientForm'
 import ClientDetail from './components/ClientDetail'
 import NotesPanel from './components/NotesPanel'
+import ClientMap from './components/ClientMap'
 import ToastContainer from './components/Toast'
 
 export default function App() {
@@ -97,6 +98,7 @@ export default function App() {
           <button style={navBtn(view === 'home')} onClick={() => navTo('home')}>Pulpit</button>
           <button style={navBtn(view === 'clients')} onClick={() => navTo('clients')}>Klienci</button>
           <button style={navBtn(view === 'notes')} onClick={() => navTo('notes')}>Notes</button>
+          <button style={navBtn(view === 'map')} onClick={() => navTo('map')}>🗺 Mapa</button>
           <button
             className="header-add-btn"
             style={{ ...navBtn(false), background: 'var(--accent)', color: '#0d0e10', marginLeft: 4 }}
@@ -129,7 +131,7 @@ export default function App() {
       {/* Mobile dropdown menu */}
       {menuOpen && (
         <div style={{ position: 'fixed', top: 56, left: 0, right: 0, zIndex: 99, background: 'var(--surface)', borderBottom: '1px solid var(--border)', display: 'flex', flexDirection: 'column', padding: 12, gap: 6 }}>
-          {[['home','🏠 Pulpit'],['clients','👥 Klienci'],['notes','📝 Notes']].map(([v, label]) => (
+          {[['home','🏠 Pulpit'],['clients','👥 Klienci'],['notes','📝 Notes'],['map','🗺 Mapa']].map(([v, label]) => (
             <button
               key={v}
               onClick={() => navTo(v)}
@@ -164,6 +166,14 @@ export default function App() {
       )}
 
       {view === 'notes' && <NotesPanel />}
+
+      {view === 'map' && (
+        <ClientMap
+          clients={clients}
+          onClientClick={openDetail}
+          onAddClient={(data) => { setEditClient({ name: data.name || '', address: data.address || '' }); setFormOpen(true) }}
+        />
+      )}
 
       <ClientForm open={formOpen} onClose={() => { setFormOpen(false); setEditClient(null) }} onSave={handleSaveClient} initial={editClient} />
       <ClientDetail open={!!detailClient} onClose={() => setDetailClient(null)} client={detailClient} onEdit={openEdit} onDelete={handleDeleteClient} />
