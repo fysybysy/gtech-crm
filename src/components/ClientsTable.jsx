@@ -92,7 +92,7 @@ export default function ClientsTable({ clients, loading, onRowClick, onEdit, onA
         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
           <thead>
             <tr>
-              {[['name','Nazwa'],['lastVisit','Ost. wizyta'],['lastContact','Ost. kontakt'],['lastOrder','Ost. zamówienie'],['stage','Etap'],['chance','Szansa']].map(([key, label]) => (
+              {[['name','Nazwa'],['lastVisit','Ost. wizyta'],['lastOrder','Ost. zamówienie'],['stage','Etap'],['chance','Szansa']].map(([key, label]) => (
                 <th key={key} style={{ ...thStyle, color: sortKey === key ? 'var(--accent)' : 'var(--muted)' }} onClick={() => handleSort(key)}>
                   {label}{sortIcon(key)}
                 </th>
@@ -111,7 +111,6 @@ export default function ClientsTable({ clients, loading, onRowClick, onEdit, onA
               >
                 <td style={{ padding: '14px 16px', fontWeight: 700 }}>{c.name}</td>
                 <td style={{ padding: '14px 16px', fontFamily: 'var(--mono)', fontSize: 12, color: 'var(--muted)' }}>{formatDate(c.lastVisit) || '—'}</td>
-                <td style={{ padding: '14px 16px', fontFamily: 'var(--mono)', fontSize: 12, color: 'var(--muted)' }}>{formatDate(c.lastContact) || '—'}</td>
                 <td style={{ padding: '14px 16px', fontFamily: 'var(--mono)', fontSize: 12, color: 'var(--muted)' }}>{formatDate(c.lastOrder) || '—'}</td>
                 <td style={{ padding: '14px 16px' }}><StageBadge stage={c.stage} /></td>
                 <td style={{ padding: '14px 16px' }}><ChanceBar value={c.chance} /></td>

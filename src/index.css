@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Lato:wght@400;700;900&family=DM+Mono:wght@400;500&display=swap');
+
 :root {
   --bg: #0d0e10;
   --surface: #14161a;
@@ -10,7 +12,7 @@
   --text: #e8eaf0;
   --muted: #5a5f6e;
   --mono: 'DM Mono', monospace;
-  --sans: 'Syne', sans-serif;
+  --sans: 'Lato', sans-serif;
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -30,33 +32,58 @@ body {
 input, select, textarea, button { font-family: var(--sans); }
 button { min-height: 36px; }
 
-/* ── Dashboard grid — 2 col desktop, 1 col mobile ─────── */
+/* ── Dashboard grid — ZAWSZE 1 kolumna, 100% szerokości ── */
 .dash-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
+  display: flex;
+  flex-direction: column;
   gap: 20px;
   width: 100%;
-  max-width: 1100px;
 }
 
-/* ── Tablet ≤ 1024px ──────────────────────────────────── */
-@media (max-width: 1024px) {
-  .dash-grid {
-    grid-template-columns: 1fr;
-  }
+/* ── Stats row ────────────────────────────────────────── */
+.stats-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-bottom: 28px;
+}
+.stats-row > div {
+  flex: 1 1 140px;
 }
 
-/* ── Mobile ≤ 768px ───────────────────────────────────── */
+/* ── Page helpers ─────────────────────────────────────── */
+.page-padding { padding: 40px; }
+.page-title { font-size: 32px; font-weight: 900; letter-spacing: -1px; margin-bottom: 6px; }
+.page-subtitle { color: var(--muted); font-size: 14px; margin-bottom: 28px; font-family: var(--mono); }
+
+/* ── Header ───────────────────────────────────────────── */
+.header-nav { height: 60px; }
+.mobile-nav { display: none !important; }
+.desktop-nav { display: flex !important; }
+
+/* ── Modal ────────────────────────────────────────────── */
+.modal-overlay { padding: 20px; align-items: center; }
+.modal-inner { border-radius: 16px; max-height: 90vh; padding: 32px; }
+
+/* ── Detail grid ──────────────────────────────────────── */
+.detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+/* ── Footer buttons ───────────────────────────────────── */
+.footer-btns { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+
+/* ═══════════════════════════════════════════════════════
+   MOBILE ≤ 768px
+═══════════════════════════════════════════════════════ */
 @media (max-width: 768px) {
-  .dash-grid {
-    grid-template-columns: 1fr;
-    gap: 14px;
-    max-width: 100%;
-  }
 
   .page-padding { padding: 16px !important; }
   .page-title { font-size: 22px !important; }
   .page-subtitle { font-size: 12px !important; margin-bottom: 16px !important; }
+
+  .dash-grid { gap: 14px !important; }
+
+  .stats-row { gap: 10px !important; margin-bottom: 16px !important; }
+  .stats-row > div { flex: 1 1 calc(50% - 5px) !important; padding: 12px 14px !important; }
 
   /* header */
   .header-nav { padding: 0 16px !important; height: 56px !important; }
@@ -66,11 +93,7 @@ button { min-height: 36px; }
   .desktop-nav { display: none !important; }
   .mobile-nav { display: flex !important; }
 
-  /* stats — 2 per row */
-  .stats-row { gap: 10px !important; margin-bottom: 16px !important; }
-  .stats-row > div { flex: 1 1 calc(50% - 5px) !important; padding: 12px 14px !important; }
-
-  /* modal slide up */
+  /* modal — slide up */
   .modal-overlay { padding: 0 !important; align-items: flex-end !important; }
   .modal-inner {
     border-radius: 16px 16px 0 0 !important;
@@ -81,11 +104,12 @@ button { min-height: 36px; }
   }
 
   .detail-grid { grid-template-columns: 1fr 1fr !important; gap: 8px !important; }
-  .footer-btns { flex-wrap: wrap !important; gap: 8px !important; }
   .footer-btns button { flex: 1 1 auto !important; }
 }
 
-/* ── Small mobile ≤ 480px ─────────────────────────────── */
+/* ═══════════════════════════════════════════════════════
+   SMALL MOBILE ≤ 480px
+═══════════════════════════════════════════════════════ */
 @media (max-width: 480px) {
   .stats-row > div { flex: 1 1 100% !important; }
   .detail-grid { grid-template-columns: 1fr !important; }
