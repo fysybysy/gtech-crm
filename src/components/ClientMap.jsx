@@ -23,19 +23,29 @@ function makeSVGIcon(color, size = 32) {
 }
 
 // ── Geocode via Nominatim — only called when client has no lat/lng ──
-async function geocodeAddress(address) {
+async function geocodeAddress(address, retries = 2) {
   if (!address) return null
-  try {
-    await new Promise(r => setTimeout(r, 1100)) // rate limit 1/s
-    const res = await fetch(
-      `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(address)}&format=json&limit=1&countrycodes=pl`,
-      { headers: { 'Accept-Language': 'pl', 'User-Agent': 'gtech-crm/1.0' } }
-    )
-    const data = await res.json()
-    if (data && data[0]) {
-      return { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) }
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      await new Promise(r => setTimeout(r, 1200)) // rate limit
+      const controller = new AbortController()
+      const timeout = setTimeout(() => controller.abort(), 8000) // 8s timeout
+      const res = await fetch(
+        `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(address)}&format=json&limit=1&countrycodes=pl`,
+        { headers: { 'Accept-Language': 'pl', 'User-Agent': 'gtech-crm/1.0' }, signal: controller.signal }
+      )
+      clearTimeout(timeout)
+      const data = await res.json()
+      if (data && data[0]) {
+        return { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) }
+      }
+      return null // address not found — no retry
+    } catch (e) {
+      if (attempt < retries) {
+        await new Promise(r => setTimeout(r, 2000 * (attempt + 1))) // backoff
+      }
     }
-  } catch {}
+  }
   return null
 }
 
@@ -167,15 +177,20 @@ export default function ClientMap({ clients, onClientClick, onAddClient }) {
       setGeocoding(true)
       let count = 0
       for (const client of needsGeocode) {
-        const coords = await geocodeAddress(client.address)
-        if (coords) {
-          addMarker(client, coords.lat, coords.lng)
-          try {
-            await saveClient({ ...client, lat: coords.lat, lng: coords.lng })
-          } catch (e) { console.error('Could not save coords:', e) }
-          count++
-          setGeocodedCount(count)
+        try {
+          const coords = await geocodeAddress(client.address)
+          if (coords) {
+            addMarker(client, coords.lat, coords.lng)
+            try {
+              await saveClient({ ...client, lat: coords.lat, lng: coords.lng })
+            } catch (e) { console.error('Could not save coords:', e) }
+          }
+        } catch (e) {
+          console.error('Geocode error for', client.name, e)
         }
+        // Always increment counter regardless of success/failure
+        count++
+        setGeocodedCount(count)
       }
       setGeocoding(false)
     })()
