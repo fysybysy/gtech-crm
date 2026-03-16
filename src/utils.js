@@ -18,6 +18,16 @@ export const STAGE_STYLES = {
   'Klient':               { bg: 'rgba(212,255,92,0.15)',  color: '#d4ff5c' },
 }
 
+export const STAGE_STYLES_LIGHT = {
+  'Prospekt':             { bg: '#e2e4e8', color: '#4a5060' },
+  '1 Wizyta':             { bg: '#c8dff7', color: '#1a5a9a' },
+  '2 Wizyta':             { bg: '#d8ccf5', color: '#4a2a9a' },
+  '3 Wizyta':             { bg: '#fde9c4', color: '#8a5200' },
+  'Spotkanie produktowe': { bg: '#fdd5c8', color: '#8a2a10' },
+  '1 Zamówienie':         { bg: '#b8f0d8', color: '#0a6640' },
+  'Klient':               { bg: '#d8f0a0', color: '#3a5a00' },
+}
+
 export function formatDate(d) {
   if (!d) return null
   const dt = new Date(d)
