@@ -7,7 +7,7 @@ const inp = { width: '100%', background: 'var(--bg)', border: '1px solid var(--b
 const lbl = { display: 'block', fontSize: 11, fontFamily: 'var(--mono)', color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 7 }
 const fg = { marginBottom: 18 }
 
-export default function MeetingPanel({ clients, onSaved }) {
+export default function MeetingPanel({ clients, onSaved, onSave: onSaveProp, preselected }) {
   const [search, setSearch]     = useState('')
   const [selected, setSelected] = useState(null)
   const [dropOpen, setDropOpen] = useState(false)
@@ -20,6 +20,13 @@ export default function MeetingPanel({ clients, onSaved }) {
   const [saving, setSaving]     = useState(false)
   const [savedMsg, setSavedMsg] = useState('')
   const dropRef = useRef(null)
+
+  // Auto-select preselected client (from map)
+  useEffect(() => {
+    if (preselected) {
+      pick(preselected)
+    }
+  }, [preselected])
 
   const safeClients = Array.isArray(clients) ? clients : []
   const filtered = search.trim()
@@ -66,7 +73,7 @@ export default function MeetingPanel({ clients, onSaved }) {
 
       console.log('Saving client update:', { stage, chance, isOrder, lastOrder: updated.lastOrder })
 
-      await saveClient(updated)
+      if (onSaveProp) { await onSaveProp({ client: selected, date, note, sample, stage, chance, isOrder }) } else { await saveClient(updated) }
       setSavedMsg(`Spotkanie z ${selected.name} zapisane ✓`)
       setTimeout(() => setSavedMsg(''), 3000)
       if (onSaved) onSaved()
