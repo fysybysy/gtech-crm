@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { STAGE_STYLES, STAGES, formatDate, matchSearch } from '../utils'
-import StageBadge from './StageBadge'
 import { getDayPlan, saveDayPlan, saveClient } from '../firebase'
 
 const STAGE_COLORS = {
@@ -73,25 +72,6 @@ export default function ClientMap({ clients, onClientClick, onAddClient, onAddMe
   const [dateFrom, setDateFrom] = useState('')
   const [dateTo, setDateTo] = useState('')
 
-  // Compute visible clients (respects both filters)
-  const visibleClients = React.useMemo(() => {
-    const safe = Array.isArray(clients) ? clients : []
-    return safe.filter(c => {
-      if (!c.lat || !c.lng) return false
-      const stageOk = stageFilter === 'all' || c.stage === stageFilter
-      let dateOk = true
-      if (dateFrom || dateTo) {
-        const val = c[dateField]
-        if (!val) return false
-        if (dateFrom && val < dateFrom) dateOk = false
-        if (dateTo && val > dateTo) dateOk = false
-      }
-      return stageOk && dateOk
-    })
-  }, [clients, stageFilter, dateField, dateFrom, dateTo])
-
-  const hasActiveFilter = stageFilter !== 'all' || dateFrom || dateTo
-
   // Client search
   const [clientSearch, setClientSearch] = useState('')
   const [clientResults, setClientResults] = useState([])
@@ -136,25 +116,6 @@ export default function ClientMap({ clients, onClientClick, onAddClient, onAddMe
     document.addEventListener('mousedown', h)
     return () => document.removeEventListener('mousedown', h)
   }, [])
-
-  // Compute visible clients (respects both filters)
-  const visibleClients = React.useMemo(() => {
-    const safe = Array.isArray(clients) ? clients : []
-    return safe.filter(c => {
-      if (!c.lat || !c.lng) return false
-      const stageOk = stageFilter === 'all' || c.stage === stageFilter
-      let dateOk = true
-      if (dateFrom || dateTo) {
-        const val = c[dateField]
-        if (!val) return false
-        if (dateFrom && val < dateFrom) dateOk = false
-        if (dateTo && val > dateTo) dateOk = false
-      }
-      return stageOk && dateOk
-    })
-  }, [clients, stageFilter, dateField, dateFrom, dateTo])
-
-  const hasActiveFilter = stageFilter !== 'all' || dateFrom || dateTo
 
   // Client search filter
   useEffect(() => {
@@ -525,7 +486,24 @@ export default function ClientMap({ clients, onClientClick, onAddClient, onAddMe
             </button>
           )}
           <span style={{ fontSize: 11, fontFamily: 'var(--mono)', color: 'var(--muted)' }}>
-            {visibleClients.length} widocznych pinezek
+            {(() => {
+              const safe = Array.isArray(clients) ? clients : []
+              const visible = safe.filter(c => {
+                if (!c.lat || !c.lng) return false
+                const stageOk = stageFilter === 'all' || c.stage === stageFilter
+                let dateOk = true
+                if (dateFrom || dateTo) {
+                  const val = c[dateField]
+                  if (!val) dateOk = false
+                  else {
+                    if (dateFrom && val < dateFrom) dateOk = false
+                    if (dateTo && val > dateTo) dateOk = false
+                  }
+                }
+                return stageOk && dateOk
+              })
+              return `${visible.length} widocznych pinezek`
+            })()}
           </span>
         </div>
       )}
@@ -546,57 +524,7 @@ export default function ClientMap({ clients, onClientClick, onAddClient, onAddMe
         </div>
       )}
 
-      {/* Main content: sidebar + map */}
-      <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
-
-        {/* Sidebar — only when filter active */}
-        {hasActiveFilter && (
-          <div style={{ width: '30%', minWidth: 220, maxWidth: 360, background: 'var(--surface)', borderRight: '1px solid var(--border)', display: 'flex', flexDirection: 'column', overflow: 'hidden', flexShrink: 0 }}>
-            <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
-              <span style={{ fontSize: 13, fontWeight: 700 }}>Klienci ({visibleClients.length})</span>
-              <span style={{ fontSize: 11, fontFamily: 'var(--mono)', color: 'var(--muted)' }}>
-                {stageFilter !== 'all' ? stageFilter : ''}
-                {stageFilter !== 'all' && (dateFrom || dateTo) ? ' · ' : ''}
-                {dateFrom || dateTo ? (dateFrom === dateTo && dateFrom ? dateFrom : [dateFrom, dateTo].filter(Boolean).join(' – ')) : ''}
-              </span>
-            </div>
-            <div style={{ overflowY: 'auto', flex: 1 }}>
-              {visibleClients.length === 0 ? (
-                <div style={{ padding: '32px 16px', textAlign: 'center', color: 'var(--muted)', fontFamily: 'var(--mono)', fontSize: 12 }}>
-                  Brak klientów<br/>dla wybranych filtrów
-                </div>
-              ) : visibleClients.map(c => (
-                <div
-                  key={c.id}
-                  onClick={() => focusClient(c)}
-                  style={{ padding: '10px 14px', borderBottom: '1px solid var(--border)', cursor: 'pointer', transition: 'background 0.15s' }}
-                  onMouseEnter={e => e.currentTarget.style.background = 'var(--surface2)'}
-                  onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-                    <div style={{ width: 8, height: 8, borderRadius: '50%', background: getColor(c.stage), flexShrink: 0 }} />
-                    <div style={{ fontSize: 13, fontWeight: 700, flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.name}</div>
-                  </div>
-                  {c.address && (
-                    <div style={{ fontSize: 11, color: 'var(--muted)', fontFamily: 'var(--mono)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', paddingLeft: 16, marginBottom: 4 }}>{c.address}</div>
-                  )}
-                  <div style={{ paddingLeft: 16, display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                    <StageBadge stage={c.stage} />
-                    {c.lastVisit && (
-                      <span style={{ fontSize: 10, fontFamily: 'var(--mono)', color: 'var(--muted)' }}>
-                        wizyta: {formatDate(c.lastVisit)}
-                      </span>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Map */}
-        <div ref={mapRef} style={{ flex: 1, zIndex: 0 }} />
-      </div>
+      <div ref={mapRef} style={{ flex: 1, zIndex: 0 }} />
 
       {!leafletLoaded && (
         <div style={{ position: 'absolute', inset: 0, background: 'var(--bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 10 }}>
