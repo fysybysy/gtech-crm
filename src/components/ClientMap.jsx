@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { STAGE_STYLES, STAGES, formatDate, matchSearch } from '../utils'
+import StageBadge from './StageBadge'
 import { getDayPlan, saveDayPlan, saveClient } from '../firebase'
 
 const STAGE_COLORS = {
@@ -66,11 +67,60 @@ export default function ClientMap({ clients, onClientClick, onAddClient, onAddMe
   const [stageFilter, setStageFilter] = useState('all')
   const [legend, setLegend] = useState(true)
 
+  // Date filter
+  const [showDateFilter, setShowDateFilter] = useState(false)
+  const [dateField, setDateField] = useState('lastVisit')
+  const [dateFrom, setDateFrom] = useState('')
+  const [dateTo, setDateTo] = useState('')
+
+  // Compute visible clients (respects both filters)
+  const visibleClients = React.useMemo(() => {
+    const safe = Array.isArray(clients) ? clients : []
+    return safe.filter(c => {
+      if (!c.lat || !c.lng) return false
+      const stageOk = stageFilter === 'all' || c.stage === stageFilter
+      let dateOk = true
+      if (dateFrom || dateTo) {
+        const val = c[dateField]
+        if (!val) return false
+        if (dateFrom && val < dateFrom) dateOk = false
+        if (dateTo && val > dateTo) dateOk = false
+      }
+      return stageOk && dateOk
+    })
+  }, [clients, stageFilter, dateField, dateFrom, dateTo])
+
+  const hasActiveFilter = stageFilter !== 'all' || dateFrom || dateTo
+
   // Client search
   const [clientSearch, setClientSearch] = useState('')
   const [clientResults, setClientResults] = useState([])
   const [clientDropOpen, setClientDropOpen] = useState(false)
   const clientDropRef = useRef(null)
+
+  // Date filter — show/hide markers based on date range
+  useEffect(() => {
+    if (!leafletMap.current) return
+    const map = leafletMap.current
+    const safe = Array.isArray(clients) ? clients : []
+    Object.entries(markersRef.current).forEach(([id, marker]) => {
+      const client = safe.find(c => c.id === id)
+      if (!client) return
+      const stageOk = stageFilter === 'all' || client.stage === stageFilter
+      let dateOk = true
+      if (dateFrom || dateTo) {
+        const val = client[dateField]
+        if (!val) { dateOk = false }
+        else {
+          if (dateFrom && val < dateFrom) dateOk = false
+          if (dateTo && val > dateTo) dateOk = false
+        }
+      }
+      const show = stageOk && dateOk
+      if (show && !map.hasLayer(marker)) marker.addTo(map)
+      if (!show && map.hasLayer(marker)) map.removeLayer(marker)
+    })
+  }, [stageFilter, dateField, dateFrom, dateTo, clients])
 
   // OSM search
   const [osmQuery, setOsmQuery] = useState('')
@@ -86,6 +136,25 @@ export default function ClientMap({ clients, onClientClick, onAddClient, onAddMe
     document.addEventListener('mousedown', h)
     return () => document.removeEventListener('mousedown', h)
   }, [])
+
+  // Compute visible clients (respects both filters)
+  const visibleClients = React.useMemo(() => {
+    const safe = Array.isArray(clients) ? clients : []
+    return safe.filter(c => {
+      if (!c.lat || !c.lng) return false
+      const stageOk = stageFilter === 'all' || c.stage === stageFilter
+      let dateOk = true
+      if (dateFrom || dateTo) {
+        const val = c[dateField]
+        if (!val) return false
+        if (dateFrom && val < dateFrom) dateOk = false
+        if (dateTo && val > dateTo) dateOk = false
+      }
+      return stageOk && dateOk
+    })
+  }, [clients, stageFilter, dateField, dateFrom, dateTo])
+
+  const hasActiveFilter = stageFilter !== 'all' || dateFrom || dateTo
 
   // Client search filter
   useEffect(() => {
@@ -292,6 +361,30 @@ export default function ClientMap({ clients, onClientClick, onAddClient, onAddMe
     })
   }, [stageFilter, clients])
 
+  // Date filter — show/hide markers based on date range
+  useEffect(() => {
+    if (!leafletMap.current) return
+    const map = leafletMap.current
+    const safe = Array.isArray(clients) ? clients : []
+    Object.entries(markersRef.current).forEach(([id, marker]) => {
+      const client = safe.find(c => c.id === id)
+      if (!client) return
+      const stageOk = stageFilter === 'all' || client.stage === stageFilter
+      let dateOk = true
+      if (dateFrom || dateTo) {
+        const val = client[dateField]
+        if (!val) { dateOk = false }
+        else {
+          if (dateFrom && val < dateFrom) dateOk = false
+          if (dateTo && val > dateTo) dateOk = false
+        }
+      }
+      const show = stageOk && dateOk
+      if (show && !map.hasLayer(marker)) marker.addTo(map)
+      if (!show && map.hasLayer(marker)) map.removeLayer(marker)
+    })
+  }, [stageFilter, dateField, dateFrom, dateTo, clients])
+
   // OSM search
   const handleOsmSearch = async () => {
     if (!osmQuery.trim() || !leafletMap.current) return
@@ -394,7 +487,48 @@ export default function ClientMap({ clients, onClientClick, onAddClient, onAddMe
         <button onClick={() => setLegend(v => !v)} style={{ padding: '5px 10px', borderRadius: 6, border: '1px solid var(--border)', background: 'var(--surface2)', color: 'var(--muted)', fontSize: 12, cursor: 'pointer', fontFamily: 'var(--sans)' }}>
           {legend ? 'Ukryj legendę' : 'Legenda'}
         </button>
+        <button
+          onClick={() => setShowDateFilter(v => !v)}
+          style={{ padding: '5px 10px', borderRadius: 6, border: `1px solid ${(dateFrom||dateTo) ? 'var(--accent2)' : 'var(--border)'}`, background: (dateFrom||dateTo) ? 'rgba(92,170,255,0.1)' : 'var(--surface2)', color: (dateFrom||dateTo) ? 'var(--accent2)' : 'var(--muted)', fontSize: 12, cursor: 'pointer', fontFamily: 'var(--sans)', whiteSpace: 'nowrap' }}
+        >
+          📅 {(dateFrom||dateTo) ? 'Filtr daty ✓' : 'Filtr daty'}
+        </button>
       </div>
+
+      {/* Date filter panel */}
+      {showDateFilter && (
+        <div style={{ background: 'var(--surface)', borderBottom: '1px solid var(--border)', padding: '10px 20px', display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap', flexShrink: 0 }}>
+          <select
+            value={dateField}
+            onChange={e => setDateField(e.target.value)}
+            style={{ padding: '6px 10px', borderRadius: 7, border: '1px solid var(--border)', background: 'var(--bg)', color: 'var(--text)', fontFamily: 'var(--sans)', fontSize: 13, cursor: 'pointer' }}
+          >
+            <option value="lastVisit">Ostatnia wizyta</option>
+            <option value="lastOrder">Ostatnie zamówienie</option>
+          </select>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span style={{ fontSize: 12, fontFamily: 'var(--mono)', color: 'var(--muted)', whiteSpace: 'nowrap' }}>Od:</span>
+            <input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)}
+              style={{ padding: '6px 10px', borderRadius: 7, border: '1px solid var(--border)', background: 'var(--bg)', color: 'var(--text)', fontFamily: 'var(--sans)', fontSize: 13, outline: 'none' }} />
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span style={{ fontSize: 12, fontFamily: 'var(--mono)', color: 'var(--muted)', whiteSpace: 'nowrap' }}>Do:</span>
+            <input type="date" value={dateTo} onChange={e => setDateTo(e.target.value)}
+              style={{ padding: '6px 10px', borderRadius: 7, border: '1px solid var(--border)', background: 'var(--bg)', color: 'var(--text)', fontFamily: 'var(--sans)', fontSize: 13, outline: 'none' }} />
+          </div>
+          {(dateFrom || dateTo) && (
+            <button
+              onClick={() => { setDateFrom(''); setDateTo('') }}
+              style={{ padding: '6px 12px', borderRadius: 6, border: '1px solid var(--danger)', background: 'transparent', color: 'var(--danger)', fontFamily: 'var(--sans)', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}
+            >
+              ✕ Wyczyść
+            </button>
+          )}
+          <span style={{ fontSize: 11, fontFamily: 'var(--mono)', color: 'var(--muted)' }}>
+            {visibleClients.length} widocznych pinezek
+          </span>
+        </div>
+      )}
 
       {/* Legend */}
       {legend && (
@@ -412,7 +546,57 @@ export default function ClientMap({ clients, onClientClick, onAddClient, onAddMe
         </div>
       )}
 
-      <div ref={mapRef} style={{ flex: 1, zIndex: 0 }} />
+      {/* Main content: sidebar + map */}
+      <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
+
+        {/* Sidebar — only when filter active */}
+        {hasActiveFilter && (
+          <div style={{ width: '30%', minWidth: 220, maxWidth: 360, background: 'var(--surface)', borderRight: '1px solid var(--border)', display: 'flex', flexDirection: 'column', overflow: 'hidden', flexShrink: 0 }}>
+            <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
+              <span style={{ fontSize: 13, fontWeight: 700 }}>Klienci ({visibleClients.length})</span>
+              <span style={{ fontSize: 11, fontFamily: 'var(--mono)', color: 'var(--muted)' }}>
+                {stageFilter !== 'all' ? stageFilter : ''}
+                {stageFilter !== 'all' && (dateFrom || dateTo) ? ' · ' : ''}
+                {dateFrom || dateTo ? (dateFrom === dateTo && dateFrom ? dateFrom : [dateFrom, dateTo].filter(Boolean).join(' – ')) : ''}
+              </span>
+            </div>
+            <div style={{ overflowY: 'auto', flex: 1 }}>
+              {visibleClients.length === 0 ? (
+                <div style={{ padding: '32px 16px', textAlign: 'center', color: 'var(--muted)', fontFamily: 'var(--mono)', fontSize: 12 }}>
+                  Brak klientów<br/>dla wybranych filtrów
+                </div>
+              ) : visibleClients.map(c => (
+                <div
+                  key={c.id}
+                  onClick={() => focusClient(c)}
+                  style={{ padding: '10px 14px', borderBottom: '1px solid var(--border)', cursor: 'pointer', transition: 'background 0.15s' }}
+                  onMouseEnter={e => e.currentTarget.style.background = 'var(--surface2)'}
+                  onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+                    <div style={{ width: 8, height: 8, borderRadius: '50%', background: getColor(c.stage), flexShrink: 0 }} />
+                    <div style={{ fontSize: 13, fontWeight: 700, flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.name}</div>
+                  </div>
+                  {c.address && (
+                    <div style={{ fontSize: 11, color: 'var(--muted)', fontFamily: 'var(--mono)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', paddingLeft: 16, marginBottom: 4 }}>{c.address}</div>
+                  )}
+                  <div style={{ paddingLeft: 16, display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                    <StageBadge stage={c.stage} />
+                    {c.lastVisit && (
+                      <span style={{ fontSize: 10, fontFamily: 'var(--mono)', color: 'var(--muted)' }}>
+                        wizyta: {formatDate(c.lastVisit)}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Map */}
+        <div ref={mapRef} style={{ flex: 1, zIndex: 0 }} />
+      </div>
 
       {!leafletLoaded && (
         <div style={{ position: 'absolute', inset: 0, background: 'var(--bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 10 }}>
