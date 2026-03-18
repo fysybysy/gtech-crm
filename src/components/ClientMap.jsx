@@ -137,25 +137,6 @@ export default function ClientMap({ clients, onClientClick, onAddClient, onAddMe
     return () => document.removeEventListener('mousedown', h)
   }, [])
 
-  // Compute visible clients (respects both filters)
-  const visibleClients = React.useMemo(() => {
-    const safe = Array.isArray(clients) ? clients : []
-    return safe.filter(c => {
-      if (!c.lat || !c.lng) return false
-      const stageOk = stageFilter === 'all' || c.stage === stageFilter
-      let dateOk = true
-      if (dateFrom || dateTo) {
-        const val = c[dateField]
-        if (!val) return false
-        if (dateFrom && val < dateFrom) dateOk = false
-        if (dateTo && val > dateTo) dateOk = false
-      }
-      return stageOk && dateOk
-    })
-  }, [clients, stageFilter, dateField, dateFrom, dateTo])
-
-  const hasActiveFilter = stageFilter !== 'all' || dateFrom || dateTo
-
   // Client search filter
   useEffect(() => {
     const q = clientSearch.trim()
