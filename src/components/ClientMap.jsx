@@ -66,6 +66,7 @@ export default function ClientMap({ clients, onClientClick, onAddClient, onAddMe
   const [planIds, setPlanIds] = useState([])
   const [stageFilter, setStageFilter] = useState('all')
   const [legend, setLegend] = useState(true)
+  const [planFilter, setPlanFilter] = useState(false)
 
   // Date filter
   const [showDateFilter, setShowDateFilter] = useState(false)
@@ -86,11 +87,12 @@ export default function ClientMap({ clients, onClientClick, onAddClient, onAddMe
         if (dateFrom && val < dateFrom) dateOk = false
         if (dateTo && val > dateTo) dateOk = false
       }
-      return stageOk && dateOk
+      const planOk = !planFilter || planIds.includes(c.id)
+      return stageOk && dateOk && planOk
     })
-  }, [clients, stageFilter, dateField, dateFrom, dateTo])
+  }, [clients, stageFilter, dateField, dateFrom, dateTo, planFilter, planIds])
 
-  const hasActiveFilter = stageFilter !== 'all' || dateFrom || dateTo
+  const hasActiveFilter = stageFilter !== 'all' || dateFrom || dateTo || planFilter
 
   // Client search
   const [clientSearch, setClientSearch] = useState('')
@@ -116,11 +118,12 @@ export default function ClientMap({ clients, onClientClick, onAddClient, onAddMe
           if (dateTo && val > dateTo) dateOk = false
         }
       }
-      const show = stageOk && dateOk
+      const planOk = !planFilter || planIds.includes(client.id)
+      const show = stageOk && dateOk && planOk
       if (show && !map.hasLayer(marker)) marker.addTo(map)
       if (!show && map.hasLayer(marker)) map.removeLayer(marker)
     })
-  }, [stageFilter, dateField, dateFrom, dateTo, clients])
+  }, [stageFilter, dateField, dateFrom, dateTo, planFilter, planIds, clients])
 
   // OSM search
   const [osmQuery, setOsmQuery] = useState('')
@@ -360,11 +363,12 @@ export default function ClientMap({ clients, onClientClick, onAddClient, onAddMe
           if (dateTo && val > dateTo) dateOk = false
         }
       }
-      const show = stageOk && dateOk
+      const planOk = !planFilter || planIds.includes(client.id)
+      const show = stageOk && dateOk && planOk
       if (show && !map.hasLayer(marker)) marker.addTo(map)
       if (!show && map.hasLayer(marker)) map.removeLayer(marker)
     })
-  }, [stageFilter, dateField, dateFrom, dateTo, clients])
+  }, [stageFilter, dateField, dateFrom, dateTo, planFilter, planIds, clients])
 
   // OSM search
   const handleOsmSearch = async () => {
@@ -523,6 +527,15 @@ export default function ClientMap({ clients, onClientClick, onAddClient, onAddMe
           <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
             <div style={{ width: 10, height: 10, borderRadius: '50%', background: '#ff5c5c', flexShrink: 0 }} />
             <span style={{ fontSize: 11, fontFamily: 'var(--mono)', color: 'var(--muted)' }}>Wyniki wyszukiwania</span>
+          </div>
+          <div style={{ marginLeft: 'auto' }}>
+            <button
+              onClick={() => setPlanFilter(v => !v)}
+              style={{ padding: '4px 12px', borderRadius: 20, border: `1px solid ${planFilter ? 'var(--accent)' : 'var(--border)'}`, background: planFilter ? 'rgba(212,255,92,0.15)' : 'transparent', color: planFilter ? 'var(--accent)' : 'var(--muted)', fontFamily: 'var(--mono)', fontSize: 11, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5, transition: 'all 0.2s' }}
+            >
+              <span>📅</span>
+              <span>Plan dnia {planFilter ? `(${planIds.length})` : ''}</span>
+            </button>
           </div>
         </div>
       )}
