@@ -4,7 +4,7 @@ import { STAGES } from '../utils'
 
 const EMPTY = {
   name: '', address: '', lastVisit: '',
-  lastOrder: '', stage: '1 Wizyta', chance: '', sample: '', note: '',
+  lastOrder: '', stage: '1 Wizyta', chance: '', sample: '', note: '', hours: '',
 }
 
 const label = { display: 'block', fontSize: 12, fontFamily: 'var(--mono)', color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8 }
@@ -26,6 +26,14 @@ export default function ClientForm({ open, onClose, onSave, initial }) {
     setSaving(true)
     try { await onSave(form) } finally { setSaving(false) }
   }
+
+  const openGoogleMaps = () => {
+    const q = [form.name, form.address].filter(Boolean).join(' ')
+    if (!q.trim()) return
+    window.open(`https://www.google.com/maps/search/${encodeURIComponent(q)}`, '_blank')
+  }
+
+  const canOpenMaps = form.name.trim() || form.address.trim()
 
   return (
     <Modal open={open} onClose={onClose}>
@@ -50,6 +58,25 @@ export default function ClientForm({ open, onClose, onSave, initial }) {
       <div style={fgroup}>
         <label style={label}>Adres</label>
         <input style={input} value={form.address} onChange={e => set('address', e.target.value)} placeholder="ul. Przykładowa 1, 00-000 Warszawa" />
+      </div>
+
+      <div style={fgroup}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+          <label style={{ ...label, marginBottom: 0 }}>Godziny otwarcia</label>
+          <button
+            onClick={openGoogleMaps}
+            disabled={!canOpenMaps}
+            style={{ padding: '4px 12px', borderRadius: 6, border: '1px solid var(--accent2)', background: 'rgba(92,170,255,0.1)', color: 'var(--accent2)', fontFamily: 'var(--sans)', fontSize: 11, fontWeight: 700, cursor: canOpenMaps ? 'pointer' : 'default', opacity: canOpenMaps ? 1 : 0.4, whiteSpace: 'nowrap' }}
+          >
+            🔍 Pokaż w Google Maps
+          </button>
+        </div>
+        <textarea
+          style={{ ...input, resize: 'vertical', minHeight: 80, fontSize: 13, lineHeight: 1.6 }}
+          value={form.hours}
+          onChange={e => set('hours', e.target.value)}
+          placeholder={'np. Pon–Pt: 9:00–18:00\nSob: 9:00–14:00\nNied: nieczynne'}
+        />
       </div>
 
       <div style={fgroup}>

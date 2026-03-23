@@ -47,6 +47,11 @@ export default function ClientDetail({ open, onClose, client, onEdit, onDelete }
     window.open(`https://www.google.com/maps/dir/?api=1&destination=${q}`, '_blank')
   }
 
+  const openGoogleMaps = () => {
+    const q = [client.name, client.address].filter(Boolean).join(' ')
+    window.open(`https://www.google.com/maps/search/${encodeURIComponent(q)}`, '_blank')
+  }
+
   return (
     <Modal open={open} onClose={onClose} maxWidth={700}>
 
@@ -83,6 +88,28 @@ export default function ClientDetail({ open, onClose, client, onEdit, onDelete }
           </DetailItem>
         )}
       </div>
+
+      {/* Hours */}
+      {(client.hours || true) && (
+        <div style={{ background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 8, padding: 14, marginBottom: 20 }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+            <div style={{ fontSize: 10, fontFamily: 'var(--mono)', color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: 1 }}>Godziny otwarcia</div>
+            <button
+              onClick={openGoogleMaps}
+              style={{ padding: '3px 10px', borderRadius: 5, border: '1px solid var(--accent2)', background: 'rgba(92,170,255,0.1)', color: 'var(--accent2)', fontSize: 11, fontWeight: 700, cursor: 'pointer', fontFamily: 'var(--sans)', whiteSpace: 'nowrap' }}
+            >
+              🔍 Google Maps
+            </button>
+          </div>
+          {client.hours ? (
+            <div style={{ fontSize: 13, fontFamily: 'var(--mono)', lineHeight: 1.8, whiteSpace: 'pre-wrap' }}>{client.hours}</div>
+          ) : (
+            <div style={{ fontSize: 12, color: 'var(--muted)', fontFamily: 'var(--mono)', fontStyle: 'italic' }}>
+              Brak danych — kliknij "Edytuj" aby uzupełnić lub "Google Maps" aby sprawdzić
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Note */}
       {client.note && (
