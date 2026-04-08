@@ -7,7 +7,7 @@ import ClientForm from './components/ClientForm'
 import ClientDetail from './components/ClientDetail'
 import NotesPanel from './components/NotesPanel'
 import ClientMap from './components/ClientMap'
-import MeetingPanel from './components/MeetingPanel'
+import { migrateStage } from './utils'
 import ToastContainer from './components/Toast'
 
 export default function App() {
@@ -19,8 +19,7 @@ export default function App() {
   const [editClient, setEditClient] = useState(null)
   const [detailClient, setDetailClient] = useState(null)
   const [menuOpen, setMenuOpen] = useState(false)
-  const [meetingClient, setMeetingClient] = useState(null)
-  const [meetingOpen, setMeetingOpen] = useState(false)
+  const [showMigrate, setShowMigrate] = useState(() => localStorage.getItem('migration-done') !== 'yes')
   const [theme, setTheme] = useState(() => localStorage.getItem('crm-theme') || 'dark')
 
   // Apply theme to <html>
@@ -33,10 +32,11 @@ export default function App() {
 
   const handleSaveClient = async (form) => {
     try {
-      await save(form)
-      toast(form.id ? 'Klient zaktualizowany ✓' : 'Klient dodany ✓')
+      const migratedForm = { ...form, stage: migrateStage(form.stage) }
+      await save(migratedForm)
+      toast(migratedForm.id ? 'Klient zaktualizowany ✓' : 'Klient dodany ✓')
       setFormOpen(false); setEditClient(null)
-      if (detailClient?.id === form.id) setDetailClient(null)
+      if (detailClient?.id === migratedForm.id) setDetailClient(null)
     } catch { toast('Błąd zapisu — sprawdź połączenie', true) }
   }
 
@@ -180,7 +180,7 @@ export default function App() {
         </div>
       )}
 
-      {view === 'home' && <Dashboard clients={clients} onMeetingSave={handleMeetingSave} onClientClick={openDetail} />}
+      {view === 'home' && <Dashboard clients={clients} onMeetingSave={handleMeetingSave} onClientClick={openDetail} showMigrate={showMigrate} />}
 
       {view === 'clients' && (
         <div className="page-padding" style={{ padding: 40 }}>
@@ -197,23 +197,7 @@ export default function App() {
           clients={clients}
           onClientClick={openDetail}
           onAddClient={(data) => { setEditClient({ name: data.name || '', address: data.address || '' }); setFormOpen(true) }}
-          onAddMeeting={(client) => { setMeetingClient(client); setMeetingOpen(true) }}
         />
-      )}
-
-      {meetingOpen && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}
-          onClick={e => { if (e.target === e.currentTarget) setMeetingOpen(false) }}>
-          <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, width: '100%', maxWidth: 520, maxHeight: '90vh', overflowY: 'auto', padding: 4, position: 'relative' }}>
-            <button onClick={() => setMeetingOpen(false)} style={{ position: 'absolute', top: 16, right: 16, background: 'none', border: 'none', color: 'var(--muted)', fontSize: 20, cursor: 'pointer', zIndex: 1 }}>✕</button>
-            <MeetingPanel
-              clients={clients}
-              preselected={meetingClient}
-              onSaved={() => { setMeetingOpen(false); setMeetingClient(null) }}
-              onSave={handleMeetingSave}
-            />
-          </div>
-        </div>
       )}
 
       <ClientForm open={formOpen} onClose={() => { setFormOpen(false); setEditClient(null) }} onSave={handleSaveClient} initial={editClient} />

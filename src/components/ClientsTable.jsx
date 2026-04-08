@@ -154,7 +154,7 @@ export default function ClientsTable({ clients, loading, onRowClick, onEdit, onA
         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
           <thead>
             <tr>
-              {[['name','Nazwa'],['lastVisit','Ost. wizyta'],['lastOrder','Ost. zamówienie'],['stage','Etap'],['chance','Szansa']].map(([key, label]) => (
+              {[['name','Nazwa'],['visitCount','Wizyty'],['lastVisit','Ost. wizyta'],['lastOrder','Ost. zamówienie'],['stage','Etap'],['chance','Szansa']].map(([key, label]) => (
                 <th key={key} style={{ ...thStyle, color: sortKey === key ? 'var(--accent)' : 'var(--muted)' }} onClick={() => handleSort(key)}>
                   {label}{sortIcon(key)}
                 </th>
@@ -169,10 +169,11 @@ export default function ClientsTable({ clients, loading, onRowClick, onEdit, onA
                 onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
               >
                 <td style={{ padding: '14px 16px', fontWeight: 700 }}>{c.name}</td>
+                <td style={{ padding: '14px 16px', fontFamily: 'var(--mono)', fontSize: 12, color: 'var(--accent2)', fontWeight: 700 }}>{c.visitCount || 0}</td>
                 <td style={{ padding: '14px 16px', fontFamily: 'var(--mono)', fontSize: 12, color: 'var(--muted)' }}>{formatDate(c.lastVisit) || '—'}</td>
                 <td style={{ padding: '14px 16px', fontFamily: 'var(--mono)', fontSize: 12, color: 'var(--muted)' }}>{formatDate(c.lastOrder) || '—'}</td>
                 <td style={{ padding: '14px 16px' }}><StageBadge stage={c.stage} /></td>
-                <td style={{ padding: '14px 16px' }}><ChanceBar value={c.chance} /></td>
+                <td style={{ padding: '14px 16px', fontFamily: 'var(--mono)', fontSize: 13, letterSpacing: 1, color: 'var(--accent)' }}>{'★'.repeat(Math.min(5,Number(c.chance)||0))}{'☆'.repeat(Math.max(0,5-Math.min(5,Number(c.chance)||0)))}</td>
                 <td style={{ padding: '14px 16px' }} onClick={e => e.stopPropagation()}>
                   <button onClick={() => onEdit(c)} style={{ padding: '6px 14px', borderRadius: 6, border: '1px solid var(--border)', background: 'var(--surface2)', color: 'var(--text)', fontFamily: 'var(--sans)', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
                     Edytuj

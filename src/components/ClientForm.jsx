@@ -4,7 +4,7 @@ import { STAGES } from '../utils'
 
 const EMPTY = {
   name: '', address: '', lastVisit: '',
-  lastOrder: '', stage: '1 Wizyta', chance: '', sample: '', note: '', hours: '',
+  lastOrder: '', stage: 'Nowy', chance: '', sample: '', note: '', hours: '', visitCount: 0,
 }
 
 const label = { display: 'block', fontSize: 12, fontFamily: 'var(--mono)', color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8 }
@@ -90,8 +90,15 @@ export default function ClientForm({ open, onClose, onSave, initial }) {
           <input style={input} type="date" value={form.lastOrder} onChange={e => set('lastOrder', e.target.value)} />
         </div>
         <div style={fgroup}>
-          <label style={label}>Szansa sprzedażowa (%)</label>
-          <input style={input} type="number" min="0" max="100" value={form.chance} onChange={e => set('chance', e.target.value)} placeholder="np. 70" />
+          <label style={label}>Szansa sprzedaży (1–5)</label>
+          <select style={{ ...input }} value={form.chance || ''} onChange={e => set('chance', e.target.value)}>
+            <option value="">— brak —</option>
+            <option value="1">★☆☆☆☆ (1)</option>
+            <option value="2">★★☆☆☆ (2)</option>
+            <option value="3">★★★☆☆ (3)</option>
+            <option value="4">★★★★☆ (4)</option>
+            <option value="5">★★★★★ (5)</option>
+          </select>
         </div>
       </div>
 

@@ -78,7 +78,13 @@ export default function ClientDetail({ open, onClose, client, onEdit, onDelete }
       <div className="detail-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 10, marginBottom: 20 }}>
         <DetailItem label="Etap"><StageBadge stage={client.stage} /></DetailItem>
         <DetailItem label="Szansa sprzedaży">
-          <span style={{ color: 'var(--accent)', fontFamily: 'var(--mono)' }}>{client.chance || 0}%</span>
+          <span style={{ color: 'var(--accent)', fontSize: 16, letterSpacing: 2 }}>
+            {'★'.repeat(Math.min(5, Math.max(0, Number(client.chance) || 0)))}
+            <span style={{ color: 'var(--border)' }}>{'☆'.repeat(Math.max(0, 5 - Math.min(5, Number(client.chance) || 0)))}</span>
+          </span>
+        </DetailItem>
+        <DetailItem label="Liczba wizyt">
+          <span style={{ color: 'var(--accent2)', fontFamily: 'var(--mono)' }}>{client.visitCount || 0}</span>
         </DetailItem>
         <DetailItem label="Ostatnia wizyta">{formatDate(client.lastVisit)}</DetailItem>
         <DetailItem label="Ostatnie zamówienie">{formatDate(client.lastOrder)}</DetailItem>

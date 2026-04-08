@@ -2,6 +2,7 @@ import React from 'react'
 import MeetingPanel from './MeetingPanel'
 import DayPlanner from './DayPlanner'
 import AlertPanels from './AlertPanels'
+import MigrateData from './MigrateData'
 
 function StatCard({ label, value, color }) {
   return (
@@ -12,18 +13,24 @@ function StatCard({ label, value, color }) {
   )
 }
 
-export default function Dashboard({ clients, onMeetingSave, onClientClick }) {
+export default function Dashboard({ clients, onMeetingSave, onClientClick, showMigrate }) {
   const safe = Array.isArray(clients) ? clients : []
+  const active = safe.filter(c => c.stage === '1 Zamówienie' || c.stage === 'Klient').length
+  const nowy = safe.filter(c => c.stage === 'Nowy').length
+  const spotkanie = safe.filter(c => c.stage === 'Spotkanie produktowe').length
+
   return (
     <div className="page-padding">
       <div className="page-title">Dobry dzień 👋</div>
       <div className="page-subtitle">// Panel główny</div>
 
+      {showMigrate && <MigrateData />}
+
       <div className="stats-row">
-        <StatCard label="Wszyscy klienci" value={safe.length} color="var(--accent)" />
-        <StatCard label="1 Wizyta" value={safe.filter(c => c.stage === '1 Wizyta').length} color="var(--accent2)" />
-        <StatCard label="Spotkanie prod." value={safe.filter(c => c.stage === 'Spotkanie produktowe').length} color="var(--warn)" />
-        <StatCard label="Aktywni klienci" value={safe.filter(c => c.stage === 'Klient').length} color="var(--accent)" />
+        <StatCard label="Aktywni klienci" value={active} color="var(--accent)" />
+        <StatCard label="Nowi" value={nowy} color="var(--accent2)" />
+        <StatCard label="Spotkanie prod." value={spotkanie} color="var(--warn)" />
+        <StatCard label="Wszyscy" value={safe.length} color="var(--muted)" />
       </div>
 
       <div className="dash-grid">

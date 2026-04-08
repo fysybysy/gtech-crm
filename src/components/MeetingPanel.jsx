@@ -65,7 +65,8 @@ export default function MeetingPanel({ clients, onSaved, onSave: onSaveProp, pre
         ...selected,
         lastVisit: date,
         stage: stage,
-        chance: chance,
+        chance: chance || selected.chance,
+        visitCount: (Number(selected.visitCount) || 0) + 1,
         notes: [{ date, text: note, sample }, ...(selected.notes || [])],
       }
       if (sample !== '') updated.sample = sample
