@@ -11,21 +11,21 @@ export const STAGES = [
 export const VISIT_STAGES = ['1 Wizyta', '2 Wizyta', '3 Wizyta']
 
 export const STAGE_STYLES = {
-  'Nieudane/Na później':  { bg: 'rgba(120,120,130,0.15)', color: '#888896' },
-  'Prospekt':             { bg: 'rgba(180,180,180,0.12)', color: '#a0a0b0' },
-  'Nowy':                 { bg: 'rgba(92,170,255,0.12)',  color: '#7ec8ff' },
+  'Nieudane/Na później':  { bg: 'rgba(220,50,50,0.15)',   color: '#ff6b6b' },
+  'Prospekt':             { bg: 'rgba(160,160,170,0.12)', color: '#a8a8b8' },
+  'Nowy':                 { bg: 'rgba(255,160,50,0.15)',  color: '#ffaa44' },
   'Spotkanie produktowe': { bg: 'rgba(255,120,92,0.15)',  color: '#ff9a7c' },
-  '1 Zamówienie':         { bg: 'rgba(92,255,180,0.15)',  color: '#5cffb8' },
-  'Klient':               { bg: 'rgba(212,255,92,0.15)',  color: '#d4ff5c' },
+  '1 Zamówienie':         { bg: 'rgba(50,180,100,0.15)',  color: '#4ec87a' },
+  'Klient':               { bg: 'rgba(50,180,100,0.15)',  color: '#4ec87a' },
 }
 
 export const STAGE_STYLES_LIGHT = {
-  'Nieudane/Na później':  { bg: '#e8e8ec', color: '#555560' },
-  'Prospekt':             { bg: '#e2e4e8', color: '#4a5060' },
-  'Nowy':                 { bg: '#c8dff7', color: '#1a5a9a' },
+  'Nieudane/Na później':  { bg: '#fde8e8', color: '#c0392b' },
+  'Prospekt':             { bg: '#e8e8ec', color: '#666676' },
+  'Nowy':                 { bg: '#fff0d8', color: '#b86a00' },
   'Spotkanie produktowe': { bg: '#fdd5c8', color: '#8a2a10' },
-  '1 Zamówienie':         { bg: '#1a6b3a', color: '#ffffff' },
-  'Klient':               { bg: '#155c2e', color: '#ffffff' },
+  '1 Zamówienie':         { bg: '#d4f0e0', color: '#1a6b3a' },
+  'Klient':               { bg: '#d4f0e0', color: '#1a6b3a' },
 }
 
 export function formatDate(d) {

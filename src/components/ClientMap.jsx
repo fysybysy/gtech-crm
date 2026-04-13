@@ -4,13 +4,12 @@ import StageBadge from './StageBadge'
 import { getDayPlan, saveDayPlan, saveClient } from '../firebase'
 
 const STAGE_COLORS = {
-  'Prospekt':             '#a0a0b0',
-  '1 Wizyta':             '#7ec8ff',
-  '2 Wizyta':             '#b09aff',
-  '3 Wizyta':             '#ffb85c',
-  'Spotkanie produktowe': '#ff9a7c',
-  '1 Zamówienie':         '#5cffb8',
-  'Klient':               '#d4ff5c',
+  'Nieudane/Na później':  '#ff4444',
+  'Prospekt':             '#a8a8b8',
+  'Nowy':                 '#ff9922',
+  'Spotkanie produktowe': '#ff7755',
+  '1 Zamówienie':         '#32c878',
+  'Klient':               '#32c878',
 }
 const getColor = (stage) => STAGE_COLORS[stage] || '#a0a0b0'
 
