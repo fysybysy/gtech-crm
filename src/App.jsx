@@ -7,7 +7,6 @@ import ClientForm from './components/ClientForm'
 import ClientDetail from './components/ClientDetail'
 import NotesPanel from './components/NotesPanel'
 import ClientMap from './components/ClientMap'
-import { migrateStage } from './utils'
 import ToastContainer from './components/Toast'
 
 export default function App() {
@@ -19,7 +18,6 @@ export default function App() {
   const [editClient, setEditClient] = useState(null)
   const [detailClient, setDetailClient] = useState(null)
   const [menuOpen, setMenuOpen] = useState(false)
-  const [showMigrate, setShowMigrate] = useState(() => localStorage.getItem('migration-done') !== 'yes')
   const [theme, setTheme] = useState(() => localStorage.getItem('crm-theme') || 'dark')
 
   // Apply theme to <html>
@@ -180,7 +178,7 @@ export default function App() {
         </div>
       )}
 
-      {view === 'home' && <Dashboard clients={clients} onMeetingSave={handleMeetingSave} onClientClick={openDetail} showMigrate={showMigrate} />}
+      {view === 'home' && <Dashboard clients={clients} onMeetingSave={handleMeetingSave} onClientClick={openDetail} />}
 
       {view === 'clients' && (
         <div className="page-padding" style={{ padding: 40 }}>
