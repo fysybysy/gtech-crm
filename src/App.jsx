@@ -30,12 +30,12 @@ export default function App() {
 
   const handleSaveClient = async (form) => {
     try {
-      const migratedForm = { ...form, stage: migrateStage(form.stage) }
-      await save(migratedForm)
-      toast(migratedForm.id ? 'Klient zaktualizowany ✓' : 'Klient dodany ✓')
+      const visitCount = Array.isArray(form.notes) ? form.notes.length : 0
+      await save({ ...form, visitCount })
+      toast(form.id ? 'Klient zaktualizowany ✓' : 'Klient dodany ✓')
       setFormOpen(false); setEditClient(null)
-      if (detailClient?.id === migratedForm.id) setDetailClient(null)
-    } catch { toast('Błąd zapisu — sprawdź połączenie', true) }
+      if (detailClient?.id === form.id) setDetailClient(null)
+    } catch (e) { console.error(e); toast('Błąd zapisu — sprawdź połączenie', true) }
   }
 
   const handleDeleteClient = async (id) => {
@@ -46,17 +46,19 @@ export default function App() {
 
   const handleMeetingSave = async ({ client, date, note, sample, stage, chance }) => {
     try {
+      const newNotes = [{ date, text: note, sample }, ...(client.notes || [])]
       const updated = {
         ...client,
         lastVisit: date,
         stage: stage || client.stage,
         chance: (chance !== '' && chance !== undefined) ? chance : client.chance,
-        notes: [{ date, text: note, sample }, ...(client.notes || [])],
+        notes: newNotes,
+        visitCount: newNotes.length,
         ...(sample !== '' ? { sample } : {}),
       }
       await save(updated)
       toast(`Spotkanie z ${client.name} zapisane ✓`)
-    } catch { toast('Błąd zapisu spotkania', true) }
+    } catch (e) { console.error(e); toast('Błąd zapisu spotkania', true) }
   }
 
   const openEdit = (c) => { setEditClient(c); setDetailClient(null); setFormOpen(true) }
