@@ -44,7 +44,7 @@ export default function App() {
     catch { toast('Błąd usuwania', true) }
   }
 
-  const handleMeetingSave = async ({ client, date, note, sample, stage, chance }) => {
+  const handleMeetingSave = async ({ client, date, note, sample, stage, chance, isOrder }) => {
     try {
       const newNotes = [{ date, text: note, sample }, ...(client.notes || [])]
       const updated = {
@@ -55,6 +55,7 @@ export default function App() {
         notes: newNotes,
         visitCount: newNotes.length,
         ...(sample !== '' ? { sample } : {}),
+        ...(isOrder ? { lastOrder: date } : {}),
       }
       await save(updated)
       toast(`Spotkanie z ${client.name} zapisane ✓`)
