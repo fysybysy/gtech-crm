@@ -1,29 +1,18 @@
 import React, { useState, useEffect } from 'react'
-import { initGoogleCalendar, getUpcomingEvents, isSignedIn, signIn, signOut } from '../hooks/useGoogleCalendar'
-import { formatDate } from '../utils'
+import { initGoogleCalendar, getUpcomingEvents, isSignedIn, signIn, signOut, silentRefresh } from '../hooks/useGoogleCalendar'
 
 function EventCard({ event }) {
-  const start = event.start?.dateTime || event.start?.date
-  const dt = start ? new Date(start) : null
+  const dt = event.start?.dateTime ? new Date(event.start.dateTime) : event.start?.date ? new Date(event.start.date + 'T00:00:00') : null
   const isAllDay = !event.start?.dateTime
-
-  const timeStr = dt
-    ? isAllDay
-      ? dt.toLocaleDateString('pl-PL', { day: '2-digit', month: '2-digit' })
-      : dt.toLocaleDateString('pl-PL', { weekday: 'short', day: '2-digit', month: '2-digit' }) + ' ' + dt.toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit' })
-    : ''
-
   const isToday = dt && new Date().toDateString() === dt.toDateString()
   const isTomorrow = dt && new Date(Date.now() + 86400000).toDateString() === dt.toDateString()
 
   return (
     <div style={{ display: 'flex', gap: 12, padding: '10px 0', borderBottom: '1px solid var(--border)' }}>
-      <div style={{ flexShrink: 0, width: 48, textAlign: 'center' }}>
+      <div style={{ flexShrink: 0, width: 44, textAlign: 'center' }}>
         {dt && (
           <>
-            <div style={{ fontSize: 20, fontWeight: 900, color: isToday ? 'var(--accent)' : 'var(--text)', lineHeight: 1 }}>
-              {dt.getDate()}
-            </div>
+            <div style={{ fontSize: 20, fontWeight: 900, color: isToday ? 'var(--accent)' : 'var(--text)', lineHeight: 1 }}>{dt.getDate()}</div>
             <div style={{ fontSize: 10, fontFamily: 'var(--mono)', color: 'var(--muted)', textTransform: 'uppercase' }}>
               {dt.toLocaleDateString('pl-PL', { month: 'short' })}
             </div>
@@ -31,9 +20,9 @@ function EventCard({ event }) {
         )}
       </div>
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 2 }}>
-          {isToday && <span style={{ fontSize: 10, padding: '1px 6px', borderRadius: 4, background: 'rgba(212,255,92,0.2)', color: 'var(--accent)', fontFamily: 'var(--mono)', fontWeight: 700 }}>DZIŚ</span>}
-          {isTomorrow && <span style={{ fontSize: 10, padding: '1px 6px', borderRadius: 4, background: 'rgba(92,170,255,0.2)', color: 'var(--accent2)', fontFamily: 'var(--mono)', fontWeight: 700 }}>JUTRO</span>}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 2, flexWrap: 'wrap' }}>
+          {isToday && <span style={{ fontSize: 10, padding: '1px 6px', borderRadius: 4, background: 'rgba(212,255,92,0.2)', color: 'var(--accent)', fontFamily: 'var(--mono)', fontWeight: 700, whiteSpace: 'nowrap' }}>DZIŚ</span>}
+          {isTomorrow && <span style={{ fontSize: 10, padding: '1px 6px', borderRadius: 4, background: 'rgba(92,170,255,0.2)', color: 'var(--accent2)', fontFamily: 'var(--mono)', fontWeight: 700, whiteSpace: 'nowrap' }}>JUTRO</span>}
           <div style={{ fontSize: 13, fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{event.summary}</div>
         </div>
         <div style={{ fontSize: 11, fontFamily: 'var(--mono)', color: 'var(--muted)' }}>
@@ -49,19 +38,30 @@ export default function GoogleCalendarWidget() {
   const [ready, setReady] = useState(false)
   const [signedIn, setSignedIn] = useState(false)
   const [events, setEvents] = useState([])
-  const [loading, setLoading] = useState(false)
+  const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
   useEffect(() => {
-    initGoogleCalendar()
-      .then(() => {
-        setReady(true)
-        if (isSignedIn()) {
+    initGoogleCalendar().then(async () => {
+      setReady(true)
+      // Auto-restore session
+      if (isSignedIn()) {
+        setSignedIn(true)
+        await loadEvents()
+      } else {
+        // Try silent refresh (no popup)
+        const ok = await silentRefresh().catch(() => false)
+        if (ok && isSignedIn()) {
           setSignedIn(true)
-          loadEvents()
+          await loadEvents()
+        } else {
+          setLoading(false)
         }
-      })
-      .catch(() => setError('Błąd ładowania Google Calendar'))
+      }
+    }).catch(() => {
+      setError('Błąd ładowania Google Calendar')
+      setLoading(false)
+    })
   }, [])
 
   const loadEvents = async () => {
@@ -75,14 +75,15 @@ export default function GoogleCalendarWidget() {
 
   const handleSignIn = async () => {
     setLoading(true)
+    setError('')
     try {
       await signIn()
       setSignedIn(true)
       await loadEvents()
-    } catch {
+    } catch (e) {
       setError('Błąd logowania — sprawdź uprawnienia')
+      setLoading(false)
     }
-    setLoading(false)
   }
 
   const handleSignOut = () => {
@@ -100,20 +101,14 @@ export default function GoogleCalendarWidget() {
         </div>
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
           {signedIn && (
-            <button onClick={loadEvents} style={{ padding: '5px 10px', borderRadius: 6, border: '1px solid var(--border)', background: 'transparent', color: 'var(--muted)', fontSize: 12, cursor: 'pointer', fontFamily: 'var(--sans)' }}>
-              ↻ Odśwież
-            </button>
+            <button onClick={loadEvents} style={{ padding: '5px 10px', borderRadius: 6, border: '1px solid var(--border)', background: 'transparent', color: 'var(--muted)', fontSize: 12, cursor: 'pointer', fontFamily: 'var(--sans)' }}>↻</button>
           )}
           {signedIn ? (
             <button onClick={handleSignOut} style={{ padding: '5px 10px', borderRadius: 6, border: '1px solid var(--border)', background: 'transparent', color: 'var(--muted)', fontSize: 12, cursor: 'pointer', fontFamily: 'var(--sans)' }}>
               Wyloguj
             </button>
           ) : (
-            <button
-              onClick={handleSignIn}
-              disabled={!ready || loading}
-              style={{ padding: '7px 14px', borderRadius: 7, border: 'none', background: 'var(--accent)', color: '#0d0e10', fontFamily: 'var(--sans)', fontSize: 13, fontWeight: 700, cursor: ready ? 'pointer' : 'default', opacity: ready ? 1 : 0.5 }}
-            >
+            <button onClick={handleSignIn} disabled={!ready || loading} style={{ padding: '7px 14px', borderRadius: 7, border: 'none', background: 'var(--accent)', color: '#0d0e10', fontFamily: 'var(--sans)', fontSize: 13, fontWeight: 700, cursor: ready ? 'pointer' : 'default', opacity: ready ? 1 : 0.5 }}>
               {loading ? 'Łączenie...' : 'Połącz z Google'}
             </button>
           )}
@@ -121,26 +116,24 @@ export default function GoogleCalendarWidget() {
       </div>
 
       {error && (
-        <div style={{ padding: '10px 14px', borderRadius: 8, background: 'rgba(255,92,92,0.1)', border: '1px solid var(--danger)', fontSize: 13, fontFamily: 'var(--mono)', color: 'var(--danger)', marginBottom: 12 }}>
-          {error}
-        </div>
+        <div style={{ padding: '10px 14px', borderRadius: 8, background: 'rgba(255,92,92,0.1)', border: '1px solid var(--danger)', fontSize: 13, fontFamily: 'var(--mono)', color: 'var(--danger)', marginBottom: 12 }}>{error}</div>
       )}
 
-      {!signedIn && !error && (
+      {!signedIn && !loading && !error && (
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 12, padding: '20px 0' }}>
           <div style={{ fontSize: 40 }}>📆</div>
           <div style={{ fontSize: 13, color: 'var(--muted)', fontFamily: 'var(--mono)', textAlign: 'center' }}>Połącz z kontem Google<br/>aby zobaczyć nadchodzące wizyty</div>
         </div>
       )}
 
-      {signedIn && loading && (
+      {loading && (
         <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--muted)', fontFamily: 'var(--mono)', fontSize: 13 }}>
-          Ładowanie wydarzeń...
+          {signedIn ? 'Ładowanie wydarzeń...' : 'Sprawdzanie sesji...'}
         </div>
       )}
 
       {signedIn && !loading && events.length === 0 && (
-        <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--muted)', fontFamily: 'var(--mono)', fontSize: 13 }}>
+        <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--muted)', fontFamily: 'var(--mono)', fontSize: 13, textAlign: 'center' }}>
           Brak zaplanowanych wizyt w ciągu 30 dni
         </div>
       )}
