@@ -7,6 +7,7 @@ import ClientForm from './components/ClientForm'
 import ClientDetail from './components/ClientDetail'
 import NotesPanel from './components/NotesPanel'
 import ClientMap from './components/ClientMap'
+import ScheduleVisitModal from './components/ScheduleVisitModal'
 import ToastContainer from './components/Toast'
 
 export default function App() {
@@ -18,6 +19,7 @@ export default function App() {
   const [editClient, setEditClient] = useState(null)
   const [detailClient, setDetailClient] = useState(null)
   const [menuOpen, setMenuOpen] = useState(false)
+  const [scheduleClient, setScheduleClient] = useState(null)
   const [theme, setTheme] = useState(() => localStorage.getItem('crm-theme') || 'dark')
 
   // Apply theme to <html>
@@ -203,6 +205,11 @@ export default function App() {
 
       <ClientForm open={formOpen} onClose={() => { setFormOpen(false); setEditClient(null) }} onSave={handleSaveClient} initial={editClient} />
       <ClientDetail open={!!detailClient} onClose={() => setDetailClient(null)} client={detailClient} onEdit={openEdit} onDelete={handleDeleteClient} />
+      <ScheduleVisitModal
+        open={!!scheduleClient}
+        onClose={() => setScheduleClient(null)}
+        client={scheduleClient}
+      />
       <ToastContainer toasts={toasts} />
     </>
   )

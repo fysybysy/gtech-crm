@@ -1,15 +1,16 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { STAGE_STYLES, STAGES, formatDate, matchSearch } from '../utils'
 import StageBadge from './StageBadge'
-import { getDayPlan, saveDayPlan, saveClient } from '../firebase'
+import { saveClient } from '../firebase'
 
 const STAGE_COLORS = {
-  'Nieudane/Na później':  '#ff4444',
-  'Prospekt':             '#a8a8b8',
-  'Nowy':                 '#ff9922',
-  'Spotkanie produktowe': '#ff7755',
-  '1 Zamówienie':         '#32c878',
-  'Klient':               '#32c878',
+  'Prospekt':             '#a0a0b0',
+  '1 Wizyta':             '#7ec8ff',
+  '2 Wizyta':             '#b09aff',
+  '3 Wizyta':             '#ffb85c',
+  'Spotkanie produktowe': '#ff9a7c',
+  '1 Zamówienie':         '#5cffb8',
+  'Klient':               '#d4ff5c',
 }
 const getColor = (stage) => STAGE_COLORS[stage] || '#a0a0b0'
 
@@ -51,7 +52,7 @@ async function geocodeAddress(address, retries = 2) {
   return null
 }
 
-export default function ClientMap({ clients, onClientClick, onAddClient, onAddMeeting }) {
+export default function ClientMap({ clients, onClientClick, onAddClient, onAddMeeting, onScheduleVisit }) {
   const mapRef = useRef(null)
   const leafletMap = useRef(null)
   const markersRef = useRef({})
@@ -127,10 +128,6 @@ export default function ClientMap({ clients, onClientClick, onAddClient, onAddMe
   // OSM search
   const [osmQuery, setOsmQuery] = useState('')
   const [searching, setSearching] = useState(false)
-
-  useEffect(() => {
-    getDayPlan().then(items => setPlanIds((items || []).map(x => x.id)))
-  }, [])
 
   // Close client dropdown on outside click
   useEffect(() => {
@@ -217,9 +214,9 @@ export default function ClientMap({ clients, onClientClick, onAddClient, onAddMe
   }, [leafletLoaded])
 
   // Build popup content
-  const buildPopup = (client, planIdsCurrent) => {
+  const buildPopup = (client) => {
     const color = getColor(client.stage)
-    const ip = planIdsCurrent.includes(client.id)
+    const ip = false // replaced by schedule
     const div = document.createElement('div')
 
     const render = (inPlan) => {
@@ -304,7 +301,7 @@ export default function ClientMap({ clients, onClientClick, onAddClient, onAddMe
       const icon = L.icon({ iconUrl: makeSVGIcon(color), iconSize: [28, 35], iconAnchor: [14, 35], popupAnchor: [0, -36] })
       if (markersRef.current[client.id]) map.removeLayer(markersRef.current[client.id])
       const marker = L.marker([lat, lng], { icon })
-      marker.bindPopup(() => buildPopup(client, planIds), { maxWidth: 260 })
+      marker.bindPopup(() => buildPopup(client), { maxWidth: 260 })
       if (stageFilter === 'all' || client.stage === stageFilter) marker.addTo(map)
       markersRef.current[client.id] = marker
     }

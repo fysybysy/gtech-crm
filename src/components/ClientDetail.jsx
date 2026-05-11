@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react'
 import Modal from './Modal'
+import ScheduleVisitModal from './ScheduleVisitModal'
 import StageBadge from './StageBadge'
 import { formatDate } from '../utils'
-import { getDayPlan, saveDayPlan } from '../firebase'
+
 
 function DetailItem({ label, children }) {
   return (
@@ -14,32 +15,14 @@ function DetailItem({ label, children }) {
 }
 
 export default function ClientDetail({ open, onClose, client, onEdit, onDelete }) {
-  const [inPlan, setInPlan] = useState(false)
-  const [adding, setAdding] = useState(false)
+  const [scheduleOpen, setScheduleOpen] = useState(false)
 
-  useEffect(() => {
-    if (client && open) {
-      getDayPlan().then(items => {
-        setInPlan(Array.isArray(items) && items.some(x => x.id === client.id))
-      })
-    }
-  }, [client, open])
+
 
   if (!client) return null
   const notes = client.notes || []
 
-  const handleAddToPlan = async () => {
-    if (inPlan || adding) return
-    setAdding(true)
-    try {
-      const current = await getDayPlan()
-      const list = Array.isArray(current) ? current : []
-      if (!list.find(x => x.id === client.id)) await saveDayPlan([...list, client])
-      setInPlan(true)
-      onClose()
-    } catch (e) { console.error(e) }
-    finally { setAdding(false) }
-  }
+
 
   const openRoute = () => {
     if (!client.address) return
@@ -78,13 +61,7 @@ export default function ClientDetail({ open, onClose, client, onEdit, onDelete }
       <div className="detail-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 10, marginBottom: 20 }}>
         <DetailItem label="Etap"><StageBadge stage={client.stage} /></DetailItem>
         <DetailItem label="Szansa sprzedaży">
-          <span style={{ color: 'var(--accent)', fontSize: 16, letterSpacing: 2 }}>
-            {'★'.repeat(Math.min(5, Math.max(0, Number(client.chance) || 0)))}
-            <span style={{ color: 'var(--border)' }}>{'☆'.repeat(Math.max(0, 5 - Math.min(5, Number(client.chance) || 0)))}</span>
-          </span>
-        </DetailItem>
-        <DetailItem label="Liczba wizyt">
-          <span style={{ color: 'var(--accent2)', fontFamily: 'var(--mono)' }}>{client.visitCount || 0}</span>
+          <span style={{ color: 'var(--accent)', fontFamily: 'var(--mono)' }}>{client.chance || 0}%</span>
         </DetailItem>
         <DetailItem label="Ostatnia wizyta">{formatDate(client.lastVisit)}</DetailItem>
         <DetailItem label="Ostatnie zamówienie">{formatDate(client.lastOrder)}</DetailItem>
@@ -174,5 +151,10 @@ export default function ClientDetail({ open, onClose, client, onEdit, onDelete }
         </button>
       </div>
     </Modal>
+    <ScheduleVisitModal
+      open={scheduleOpen}
+      onClose={() => setScheduleOpen(false)}
+      client={client}
+    />
   )
 }
