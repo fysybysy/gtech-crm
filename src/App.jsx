@@ -1,6 +1,9 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useClients } from './hooks/useClients'
 import { useToast } from './hooks/useToast'
+import { loadSession, clearSession } from './hooks/useAuth'
+import LoginScreen from './components/LoginScreen'
+import SetupUser from './components/SetupUser'
 import Dashboard from './components/Dashboard'
 import ClientsTable from './components/ClientsTable'
 import ClientForm from './components/ClientForm'
@@ -11,6 +14,31 @@ import ScheduleVisitModal from './components/ScheduleVisitModal'
 import ToastContainer from './components/Toast'
 
 export default function App() {
+  const [user, setUser] = useState(null)
+  const [authChecked, setAuthChecked] = useState(false)
+
+  // Check for existing session on load
+  useEffect(() => {
+    const session = loadSession()
+    if (session) setUser(session)
+    setAuthChecked(true)
+  }, [])
+
+  // One-time setup mode: ?setup=1
+  if (typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('setup') === '1') {
+    return <SetupUser />
+  }
+
+  if (!authChecked) return null
+
+  if (!user) {
+    return <LoginScreen onLogin={setUser} />
+  }
+
+  return <AppMain user={user} onLogout={() => { clearSession(); setUser(null) }} />
+}
+
+function AppMain({ user, onLogout }) {
   const { clients, loading, save, remove } = useClients()
   const { toasts, toast } = useToast()
 
@@ -20,10 +48,11 @@ export default function App() {
   const [detailClient, setDetailClient] = useState(null)
   const [menuOpen, setMenuOpen] = useState(false)
   const [scheduleClient, setScheduleClient] = useState(null)
+  const [meetingClient, setMeetingClient] = useState(null)
+  const [meetingOpen, setMeetingOpen] = useState(false)
   const [theme, setTheme] = useState(() => localStorage.getItem('crm-theme') || 'dark')
 
-  // Apply theme to <html>
-  React.useEffect(() => {
+  useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme)
     localStorage.setItem('crm-theme', theme)
   }, [theme])
@@ -85,7 +114,7 @@ export default function App() {
         toast('Importowanie...')
         for (const c of list) await save(c)
         toast(`Zaimportowano ${list.length} klientów ✓`)
-      } catch { toast('Błąd importu — nieprawidłowy plik', true) }
+      } catch { toast('Błąd importu', true) }
     }
     input.click()
   }
@@ -102,7 +131,6 @@ export default function App() {
 
   return (
     <>
-      {/* Header */}
       <header className="header-nav" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 40px', height: 60, borderBottom: '1px solid var(--border)', background: 'var(--surface)', position: 'sticky', top: 0, zIndex: 100 }}>
         <div className="header-logo" style={{ fontSize: 20, fontWeight: 800, letterSpacing: -0.5, flexShrink: 0 }}>
           G-TECH<span style={{ color: 'var(--accent)' }}>.</span>crm
@@ -114,65 +142,46 @@ export default function App() {
           <button style={navBtn(view === 'clients')} onClick={() => navTo('clients')}>Klienci</button>
           <button style={navBtn(view === 'notes')} onClick={() => navTo('notes')}>Notes</button>
           <button style={navBtn(view === 'map')} onClick={() => navTo('map')}>🗺 Mapa</button>
-          <button
-            className="header-add-btn"
-            style={{ ...navBtn(false), background: 'var(--accent)', color: '#0d0e10', marginLeft: 4 }}
-            onClick={() => { setEditClient(null); setFormOpen(true) }}
-          >
+          <button style={{ ...navBtn(false), background: 'var(--accent)', color: '#0d0e10', marginLeft: 4 }} onClick={() => { setEditClient(null); setFormOpen(true) }}>
             + Nowy klient
           </button>
-          <button
-            onClick={toggleTheme}
-            title={theme === 'dark' ? 'Włącz jasny motyw' : 'Włącz ciemny motyw'}
-            style={{ width: 36, height: 36, borderRadius: 8, border: '1px solid var(--border)', background: 'var(--surface2)', color: 'var(--text)', fontSize: 16, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', marginLeft: 4 }}
-          >
+          <div className="header-divider" style={{ width: 1, height: 24, background: 'var(--border)', margin: '0 8px' }} />
+          <button onClick={toggleTheme} title={theme === 'dark' ? 'Jasny motyw' : 'Ciemny motyw'} style={{ width: 36, height: 36, borderRadius: 8, border: '1px solid var(--border)', background: 'var(--surface2)', color: 'var(--text)', fontSize: 16, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             {theme === 'dark' ? '☀️' : '🌙'}
           </button>
-          <div className="header-divider" style={{ width: 1, height: 24, background: 'var(--border)', margin: '0 4px' }} />
           <button className="header-util" style={utilBtn} onClick={handleImport}>↑ Importuj</button>
           <button className="header-util" style={utilBtn} onClick={handleExport}>↓ Eksportuj</button>
+          <div style={{ width: 1, height: 24, background: 'var(--border)', margin: '0 4px' }} />
+          <div style={{ fontSize: 12, fontFamily: 'var(--mono)', color: 'var(--muted)', marginRight: 4 }}>{user.username}</div>
+          <button onClick={onLogout} style={{ ...utilBtn, color: 'var(--danger)', borderColor: 'var(--danger)' }}>Wyloguj</button>
         </div>
 
-        {/* Mobile: add + hamburger */}
+        {/* Mobile nav */}
         <div className="mobile-nav" style={{ display: 'none', alignItems: 'center', gap: 8 }}>
-          <button
-            onClick={() => { setEditClient(null); setFormOpen(true) }}
-            style={{ padding: '7px 12px', borderRadius: 6, border: 'none', background: 'var(--accent)', color: '#0d0e10', fontFamily: 'var(--sans)', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}
-          >
-            + Nowy
-          </button>
-          <button
-            onClick={() => setMenuOpen(v => !v)}
-            style={{ width: 38, height: 38, borderRadius: 8, border: '1px solid var(--border)', background: 'var(--surface2)', color: 'var(--text)', fontSize: 18, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-          >
+          <button onClick={() => { setEditClient(null); setFormOpen(true) }} style={{ padding: '7px 12px', borderRadius: 6, border: 'none', background: 'var(--accent)', color: '#0d0e10', fontFamily: 'var(--sans)', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>+ Nowy</button>
+          <button onClick={() => setMenuOpen(v => !v)} style={{ width: 38, height: 38, borderRadius: 8, border: '1px solid var(--border)', background: 'var(--surface2)', color: 'var(--text)', fontSize: 18, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             {menuOpen ? '✕' : '☰'}
           </button>
         </div>
       </header>
 
-      {/* Mobile dropdown menu */}
+      {/* Mobile menu */}
       {menuOpen && (
         <div style={{ position: 'fixed', top: 56, left: 0, right: 0, zIndex: 99, background: 'var(--surface)', borderBottom: '1px solid var(--border)', display: 'flex', flexDirection: 'column', padding: 12, gap: 6 }}>
           {[['home','🏠 Pulpit'],['clients','👥 Klienci'],['notes','📝 Notes'],['map','🗺 Mapa']].map(([v, label]) => (
-            <button
-              key={v}
-              onClick={() => navTo(v)}
-              style={{ padding: '12px 16px', borderRadius: 8, border: 'none', background: view === v ? 'var(--accent)' : 'var(--surface2)', color: view === v ? '#0d0e10' : 'var(--text)', fontFamily: 'var(--sans)', fontSize: 15, fontWeight: 600, cursor: 'pointer', textAlign: 'left' }}
-            >
+            <button key={v} onClick={() => navTo(v)} style={{ padding: '12px 16px', borderRadius: 8, border: 'none', background: view === v ? 'var(--accent)' : 'var(--surface2)', color: view === v ? '#0d0e10' : 'var(--text)', fontFamily: 'var(--sans)', fontSize: 15, fontWeight: 600, cursor: 'pointer', textAlign: 'left' }}>
               {label}
             </button>
           ))}
           <div style={{ height: 1, background: 'var(--border)', margin: '4px 0' }} />
           <div style={{ display: 'flex', gap: 8 }}>
+            <button onClick={toggleTheme} style={{ ...utilBtn, flex: 1 }}>{theme === 'dark' ? '☀️ Jasny' : '🌙 Ciemny'}</button>
+            <button onClick={onLogout} style={{ ...utilBtn, flex: 1, color: 'var(--danger)', borderColor: 'var(--danger)' }}>Wyloguj</button>
+          </div>
+          <div style={{ display: 'flex', gap: 8 }}>
             <button onClick={() => { handleImport(); setMenuOpen(false) }} style={{ ...utilBtn, flex: 1 }}>↑ Importuj</button>
             <button onClick={() => { handleExport(); setMenuOpen(false) }} style={{ ...utilBtn, flex: 1 }}>↓ Eksportuj</button>
           </div>
-          <button
-            onClick={() => { toggleTheme(); setMenuOpen(false) }}
-            style={{ padding: '12px 16px', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--surface2)', color: 'var(--text)', fontFamily: 'var(--sans)', fontSize: 15, fontWeight: 600, cursor: 'pointer', textAlign: 'left' }}
-          >
-            {theme === 'dark' ? '☀️ Jasny motyw' : '🌙 Ciemny motyw'}
-          </button>
         </div>
       )}
 
@@ -183,7 +192,7 @@ export default function App() {
         </div>
       )}
 
-      {view === 'home' && <Dashboard clients={clients} onMeetingSave={handleMeetingSave} onClientClick={openDetail} />}
+      {view === 'home' && <Dashboard clients={clients} onMeetingSave={handleMeetingSave} />}
 
       {view === 'clients' && (
         <div className="page-padding" style={{ padding: 40 }}>
@@ -200,16 +209,23 @@ export default function App() {
           clients={clients}
           onClientClick={openDetail}
           onAddClient={(data) => { setEditClient({ name: data.name || '', address: data.address || '' }); setFormOpen(true) }}
+          onAddMeeting={(client) => { setMeetingClient(client); setMeetingOpen(true) }}
+          onScheduleVisit={(client) => setScheduleClient(client)}
         />
+      )}
+
+      {meetingOpen && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}
+          onClick={e => { if (e.target === e.currentTarget) setMeetingOpen(false) }}>
+          <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, width: '100%', maxWidth: 520, maxHeight: '90vh', overflowY: 'auto', padding: 4, position: 'relative' }}>
+            <button onClick={() => setMeetingOpen(false)} style={{ position: 'absolute', top: 16, right: 16, background: 'none', border: 'none', color: 'var(--muted)', fontSize: 20, cursor: 'pointer', zIndex: 1 }}>✕</button>
+          </div>
+        </div>
       )}
 
       <ClientForm open={formOpen} onClose={() => { setFormOpen(false); setEditClient(null) }} onSave={handleSaveClient} initial={editClient} />
       <ClientDetail open={!!detailClient} onClose={() => setDetailClient(null)} client={detailClient} onEdit={openEdit} onDelete={handleDeleteClient} />
-      <ScheduleVisitModal
-        open={!!scheduleClient}
-        onClose={() => setScheduleClient(null)}
-        client={scheduleClient}
-      />
+      <ScheduleVisitModal open={!!scheduleClient} onClose={() => setScheduleClient(null)} client={scheduleClient} />
       <ToastContainer toasts={toasts} />
     </>
   )
