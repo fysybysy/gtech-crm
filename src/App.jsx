@@ -3,6 +3,7 @@ import { useClients } from './hooks/useClients'
 import { useToast } from './hooks/useToast'
 import { loadSession, clearSession } from './hooks/useAuth'
 import LoginScreen from './components/LoginScreen'
+import CalendarAuthScreen from './components/CalendarAuthScreen'
 import SetupUser from './components/SetupUser'
 import Dashboard from './components/Dashboard'
 import ClientsTable from './components/ClientsTable'
@@ -16,6 +17,7 @@ import ToastContainer from './components/Toast'
 export default function App() {
   const [user, setUser] = useState(null)
   const [authChecked, setAuthChecked] = useState(false)
+  const [calendarAuthed, setCalendarAuthed] = useState(false)
 
   // Check for existing session on load
   useEffect(() => {
@@ -32,10 +34,14 @@ export default function App() {
   if (!authChecked) return null
 
   if (!user) {
-    return <LoginScreen onLogin={setUser} />
+    return <LoginScreen onLogin={(u) => { setUser(u); setCalendarAuthed(false) }} />
   }
 
-  return <AppMain user={user} onLogout={() => { clearSession(); setUser(null) }} />
+  if (!calendarAuthed) {
+    return <CalendarAuthScreen user={user} onDone={() => setCalendarAuthed(true)} />
+  }
+
+  return <AppMain user={user} onLogout={() => { clearSession(); setUser(null); setCalendarAuthed(false) }} />
 }
 
 function AppMain({ user, onLogout }) {
