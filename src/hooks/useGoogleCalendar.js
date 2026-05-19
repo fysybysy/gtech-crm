@@ -4,9 +4,9 @@ const SCOPES = 'https://www.googleapis.com/auth/calendar.events'
 const DISCOVERY_DOC = 'https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest'
 const TOKEN_KEY = 'gtech_gtoken'
 
-let gapiInited = false
 let tokenClient = null
 let initPromise = null
+let refreshTimer = null
 
 function loadScript(src) {
   return new Promise((resolve, reject) => {
@@ -18,24 +18,22 @@ function loadScript(src) {
 }
 
 function saveToken(token) {
-  if (!token) return
-  const data = { ...token, saved_at: Date.now() }
-  localStorage.setItem(TOKEN_KEY, JSON.stringify(data))
+  if (!token?.access_token) return
+  localStorage.setItem(TOKEN_KEY, JSON.stringify({ ...token, saved_at: Date.now() }))
 }
 
-function loadToken() {
+function loadSavedToken() {
   try {
     const raw = localStorage.getItem(TOKEN_KEY)
     if (!raw) return null
     const data = JSON.parse(raw)
-    // Token valid for 1 hour — restore if less than 50 min old
-    const age = (Date.now() - data.saved_at) / 1000
-    if (age < 3000) return data
+    // Keep for up to 55 min (token lasts 60min)
+    if (Date.now() - data.saved_at < 55 * 60 * 1000) return data
     return null
   } catch { return null }
 }
 
-function clearToken() {
+export function clearToken() {
   localStorage.removeItem(TOKEN_KEY)
 }
 
@@ -46,18 +44,20 @@ export async function initGoogleCalendar() {
     await loadScript('https://accounts.google.com/gsi/client')
     await new Promise(r => window.gapi.load('client', r))
     await window.gapi.client.init({ discoveryDocs: [DISCOVERY_DOC] })
-    gapiInited = true
 
     tokenClient = window.google.accounts.oauth2.initTokenClient({
       client_id: CLIENT_ID,
       scope: SCOPES,
       callback: () => {},
+      // No popup — use existing Google session in browser
+      prompt: '',
     })
 
-    // Restore saved token
-    const saved = loadToken()
+    // Restore saved token immediately
+    const saved = loadSavedToken()
     if (saved) {
       window.gapi.client.setToken(saved)
+      scheduleRefresh()
     }
   })()
   return initPromise
@@ -68,82 +68,99 @@ export function isSignedIn() {
   return !!(token?.access_token)
 }
 
+// Full sign in — shows Google account picker once
 export async function signIn() {
   return new Promise((resolve, reject) => {
     tokenClient.callback = (resp) => {
-      if (resp.error) { reject(resp); return }
-      saveToken(window.gapi.client.getToken())
-      resolve(resp)
+      if (resp.error) { reject(new Error(resp.error)); return }
+      const token = window.gapi.client.getToken()
+      saveToken(token)
+      scheduleRefresh()
+      resolve(token)
     }
-    // Try silent refresh first, fall back to consent screen
+    tokenClient.requestAccessToken({ prompt: 'select_account' })
+  })
+}
+
+// Silent refresh — no popup, uses existing browser Google session
+async function silentRefresh() {
+  return new Promise((resolve) => {
+    const timer = setTimeout(() => resolve(false), 5000) // 5s timeout
+    tokenClient.callback = (resp) => {
+      clearTimeout(timer)
+      if (resp.error) { resolve(false); return }
+      const token = window.gapi.client.getToken()
+      saveToken(token)
+      resolve(true)
+    }
+    // prompt: '' means no UI shown — uses existing Google session
     tokenClient.requestAccessToken({ prompt: '' })
   })
 }
 
-// Silent refresh — called automatically, no popup
-export async function silentRefresh() {
-  return new Promise((resolve) => {
-    tokenClient.callback = (resp) => {
-      if (resp.error) { clearToken(); resolve(false); return }
-      saveToken(window.gapi.client.getToken())
-      resolve(true)
+// Schedule auto-refresh every 45 minutes
+function scheduleRefresh() {
+  if (refreshTimer) clearInterval(refreshTimer)
+  refreshTimer = setInterval(async () => {
+    if (isSignedIn()) {
+      await silentRefresh()
     }
-    tokenClient.requestAccessToken({ prompt: 'none' })
-  })
+  }, 45 * 60 * 1000)
+}
+
+// Called before any API call — ensures valid token
+export async function ensureSignedIn() {
+  if (isSignedIn()) return true
+  // Try to restore from localStorage
+  const saved = loadSavedToken()
+  if (saved) {
+    window.gapi.client.setToken(saved)
+    scheduleRefresh()
+    return true
+  }
+  // Try silent refresh (no popup)
+  const ok = await silentRefresh()
+  if (ok) { scheduleRefresh(); return true }
+  return false
 }
 
 export function signOut() {
+  if (refreshTimer) clearInterval(refreshTimer)
   const token = window.gapi?.client?.getToken()
-  if (token) {
-    window.google.accounts.oauth2.revoke(token.access_token)
-    window.gapi.client.setToken(null)
+  if (token?.access_token) {
+    window.google.accounts.oauth2.revoke(token.access_token, () => {})
   }
+  window.gapi?.client?.setToken(null)
   clearToken()
 }
 
-async function ensureToken() {
-  if (isSignedIn()) return true
-  // Try to restore from localStorage
-  const saved = loadToken()
-  if (saved) {
-    window.gapi.client.setToken(saved)
-    return true
-  }
-  // Try silent refresh
-  const ok = await silentRefresh()
-  return ok
-}
-
 export async function addCalendarEvent({ title, address, date, hour, description }) {
-  await ensureToken()
-  if (!isSignedIn()) throw new Error('not_signed_in')
+  const ok = await ensureSignedIn()
+  if (!ok) throw new Error('not_signed_in')
 
   const [year, month, day] = date.split('-').map(Number)
   const start = new Date(year, month - 1, day, hour, 0, 0)
   const end = new Date(year, month - 1, day, hour + 1, 0, 0)
 
-  const event = {
-    summary: title,
-    location: address || '',
-    description: description || '',
-    start: { dateTime: start.toISOString(), timeZone: 'Europe/Warsaw' },
-    end: { dateTime: end.toISOString(), timeZone: 'Europe/Warsaw' },
-  }
-
   const response = await window.gapi.client.calendar.events.insert({
     calendarId: CALENDAR_ID,
-    resource: event,
+    resource: {
+      summary: title,
+      location: address || '',
+      description: description || '',
+      start: { dateTime: start.toISOString(), timeZone: 'Europe/Warsaw' },
+      end: { dateTime: end.toISOString(), timeZone: 'Europe/Warsaw' },
+    },
   })
   return response.result
 }
 
 export async function getUpcomingEvents(days = 30) {
-  const ok = await ensureToken()
+  const ok = await ensureSignedIn()
   if (!ok) return []
   try {
     const now = new Date()
-    const end = new Date()
-    end.setDate(end.getDate() + days)
+    const end = new Date(); end.setDate(end.getDate() + days)
     const response = await window.gapi.client.calendar.events.list({
       calendarId: CALENDAR_ID,
       timeMin: now.toISOString(),

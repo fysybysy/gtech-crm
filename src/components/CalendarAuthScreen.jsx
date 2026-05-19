@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { initGoogleCalendar, signIn, isSignedIn } from '../hooks/useGoogleCalendar'
+import { initGoogleCalendar, signIn, isSignedIn, ensureSignedIn } from '../hooks/useGoogleCalendar'
 
 export default function CalendarAuthScreen({ user, onDone }) {
   const [ready, setReady] = useState(false)
@@ -7,10 +7,11 @@ export default function CalendarAuthScreen({ user, onDone }) {
   const [error, setError] = useState('')
 
   useEffect(() => {
-    initGoogleCalendar().then(() => {
+    initGoogleCalendar().then(async () => {
       setReady(true)
-      // If already signed in — skip this screen
-      if (isSignedIn()) onDone()
+      // Try silent restore first — skip screen if successful
+      const ok = await ensureSignedIn()
+      if (ok) onDone()
     }).catch(() => setError('Błąd ładowania Google API'))
   }, [])
 
