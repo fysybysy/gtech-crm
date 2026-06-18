@@ -1,6 +1,7 @@
 import React from 'react'
 import MeetingPanel from './MeetingPanel'
-import GoogleCalendarWidget from './GoogleCalendarWidget'
+import DayPlanner from './DayPlanner'
+import AlertPanels from './AlertPanels'
 
 function StatCard({ label, value, color }) {
   return (
@@ -11,7 +12,7 @@ function StatCard({ label, value, color }) {
   )
 }
 
-export default function Dashboard({ clients, onMeetingSave }) {
+export default function Dashboard({ clients, onMeetingSave, onClientClick }) {
   const safe = Array.isArray(clients) ? clients : []
   const active = safe.filter(c => c.stage === '1 Zamówienie' || c.stage === 'Klient').length
   const nowy = safe.filter(c => c.stage === 'Nowy').length
@@ -31,8 +32,10 @@ export default function Dashboard({ clients, onMeetingSave }) {
 
       <div className="dash-grid">
         <MeetingPanel clients={safe} onSave={onMeetingSave} />
-        <GoogleCalendarWidget />
+        <DayPlanner clients={safe} onClientClick={onClientClick} />
       </div>
+
+      <AlertPanels clients={safe} onClientClick={onClientClick} />
     </div>
   )
 }

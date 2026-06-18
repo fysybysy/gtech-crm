@@ -3,7 +3,6 @@ import { useClients } from './hooks/useClients'
 import { useToast } from './hooks/useToast'
 import { loadSession, clearSession } from './hooks/useAuth'
 import LoginScreen from './components/LoginScreen'
-import CalendarAuthScreen from './components/CalendarAuthScreen'
 import SetupUser from './components/SetupUser'
 import Dashboard from './components/Dashboard'
 import ClientsTable from './components/ClientsTable'
@@ -11,22 +10,18 @@ import ClientForm from './components/ClientForm'
 import ClientDetail from './components/ClientDetail'
 import NotesPanel from './components/NotesPanel'
 import ClientMap from './components/ClientMap'
-import ScheduleVisitModal from './components/ScheduleVisitModal'
 import ToastContainer from './components/Toast'
 
 export default function App() {
   const [user, setUser] = useState(null)
   const [authChecked, setAuthChecked] = useState(false)
-  const [calendarAuthed, setCalendarAuthed] = useState(false)
 
-  // Check for existing session on load
   useEffect(() => {
     const session = loadSession()
     if (session) setUser(session)
     setAuthChecked(true)
   }, [])
 
-  // One-time setup mode: ?setup=1
   if (typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('setup') === '1') {
     return <SetupUser />
   }
@@ -34,14 +29,10 @@ export default function App() {
   if (!authChecked) return null
 
   if (!user) {
-    return <LoginScreen onLogin={(u) => { setUser(u); setCalendarAuthed(false) }} />
+    return <LoginScreen onLogin={setUser} />
   }
 
-  if (!calendarAuthed) {
-    return <CalendarAuthScreen user={user} onDone={() => setCalendarAuthed(true)} />
-  }
-
-  return <AppMain user={user} onLogout={() => { clearSession(); setUser(null); setCalendarAuthed(false) }} />
+  return <AppMain user={user} onLogout={() => { clearSession(); setUser(null) }} />
 }
 
 function AppMain({ user, onLogout }) {
@@ -53,9 +44,6 @@ function AppMain({ user, onLogout }) {
   const [editClient, setEditClient] = useState(null)
   const [detailClient, setDetailClient] = useState(null)
   const [menuOpen, setMenuOpen] = useState(false)
-  const [scheduleClient, setScheduleClient] = useState(null)
-  const [meetingClient, setMeetingClient] = useState(null)
-  const [meetingOpen, setMeetingOpen] = useState(false)
   const [theme, setTheme] = useState(() => localStorage.getItem('crm-theme') || 'dark')
 
   useEffect(() => {
@@ -142,7 +130,6 @@ function AppMain({ user, onLogout }) {
           G-TECH<span style={{ color: 'var(--accent)' }}>.</span>crm
         </div>
 
-        {/* Desktop nav */}
         <div className="desktop-nav" style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
           <button style={navBtn(view === 'home')} onClick={() => navTo('home')}>Pulpit</button>
           <button style={navBtn(view === 'clients')} onClick={() => navTo('clients')}>Klienci</button>
@@ -162,7 +149,6 @@ function AppMain({ user, onLogout }) {
           <button onClick={onLogout} style={{ ...utilBtn, color: 'var(--danger)', borderColor: 'var(--danger)' }}>Wyloguj</button>
         </div>
 
-        {/* Mobile nav */}
         <div className="mobile-nav" style={{ display: 'none', alignItems: 'center', gap: 8 }}>
           <button onClick={() => { setEditClient(null); setFormOpen(true) }} style={{ padding: '7px 12px', borderRadius: 6, border: 'none', background: 'var(--accent)', color: '#0d0e10', fontFamily: 'var(--sans)', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>+ Nowy</button>
           <button onClick={() => setMenuOpen(v => !v)} style={{ width: 38, height: 38, borderRadius: 8, border: '1px solid var(--border)', background: 'var(--surface2)', color: 'var(--text)', fontSize: 18, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -171,7 +157,6 @@ function AppMain({ user, onLogout }) {
         </div>
       </header>
 
-      {/* Mobile menu */}
       {menuOpen && (
         <div style={{ position: 'fixed', top: 56, left: 0, right: 0, zIndex: 99, background: 'var(--surface)', borderBottom: '1px solid var(--border)', display: 'flex', flexDirection: 'column', padding: 12, gap: 6 }}>
           {[['home','🏠 Pulpit'],['clients','👥 Klienci'],['notes','📝 Notes'],['map','🗺 Mapa']].map(([v, label]) => (
@@ -198,7 +183,7 @@ function AppMain({ user, onLogout }) {
         </div>
       )}
 
-      {view === 'home' && <Dashboard clients={clients} onMeetingSave={handleMeetingSave} />}
+      {view === 'home' && <Dashboard clients={clients} onMeetingSave={handleMeetingSave} onClientClick={openDetail} />}
 
       {view === 'clients' && (
         <div className="page-padding" style={{ padding: 40 }}>
@@ -215,23 +200,11 @@ function AppMain({ user, onLogout }) {
           clients={clients}
           onClientClick={openDetail}
           onAddClient={(data) => { setEditClient({ name: data.name || '', address: data.address || '' }); setFormOpen(true) }}
-          onAddMeeting={(client) => { setMeetingClient(client); setMeetingOpen(true) }}
-          onScheduleVisit={(client) => setScheduleClient(client)}
         />
-      )}
-
-      {meetingOpen && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)', zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20 }}
-          onClick={e => { if (e.target === e.currentTarget) setMeetingOpen(false) }}>
-          <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 16, width: '100%', maxWidth: 520, maxHeight: '90vh', overflowY: 'auto', padding: 4, position: 'relative' }}>
-            <button onClick={() => setMeetingOpen(false)} style={{ position: 'absolute', top: 16, right: 16, background: 'none', border: 'none', color: 'var(--muted)', fontSize: 20, cursor: 'pointer', zIndex: 1 }}>✕</button>
-          </div>
-        </div>
       )}
 
       <ClientForm open={formOpen} onClose={() => { setFormOpen(false); setEditClient(null) }} onSave={handleSaveClient} initial={editClient} />
       <ClientDetail open={!!detailClient} onClose={() => setDetailClient(null)} client={detailClient} onEdit={openEdit} onDelete={handleDeleteClient} />
-      <ScheduleVisitModal open={!!scheduleClient} onClose={() => setScheduleClient(null)} client={scheduleClient} />
       <ToastContainer toasts={toasts} />
     </>
   )

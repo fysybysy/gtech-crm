@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { STAGE_STYLES, STAGES, formatDate, matchSearch } from '../utils'
 import StageBadge from './StageBadge'
-import { saveClient } from '../firebase'
+import { getDayPlan, saveDayPlan, saveClient } from '../firebase'
 
 const STAGE_COLORS = {
   'Nieudane/Na później':  '#e53935',
@@ -51,7 +51,8 @@ async function geocodeAddress(address, retries = 2) {
   return null
 }
 
-export default function ClientMap({ clients, onClientClick, onAddClient, onAddMeeting, onScheduleVisit }) {
+export default function ClientMap({ clients, onClientClick, onAddClient }) {
+  const [planIds, setPlanIds] = useState([])
   const mapRef = useRef(null)
   const leafletMap = useRef(null)
   const markersRef = useRef({})
@@ -65,6 +66,10 @@ export default function ClientMap({ clients, onClientClick, onAddClient, onAddMe
   const [stageFilter, setStageFilter] = useState('all')
   const [legend, setLegend] = useState(true)
   const [planFilter, setPlanFilter] = useState(false)
+
+  useEffect(() => {
+    getDayPlan().then(items => setPlanIds((items || []).map(x => x.id)))
+  }, [])
 
   // Date filter
   const [showDateFilter, setShowDateFilter] = useState(false)
@@ -212,9 +217,9 @@ export default function ClientMap({ clients, onClientClick, onAddClient, onAddMe
   }, [leafletLoaded])
 
   // Build popup content
-  const buildPopup = (client) => {
+  const buildPopup = (client, planIdsCurrent) => {
     const color = getColor(client.stage)
-    const ip = false // replaced by schedule
+    const ip = planIdsCurrent.includes(client.id) // replaced by schedule
     const div = document.createElement('div')
 
     const render = (_inPlan) => {
@@ -235,13 +240,6 @@ export default function ClientMap({ clients, onClientClick, onAddClient, onAddMe
       const btnGroup = document.createElement('div')
       btnGroup.style.cssText = 'display:flex;flex-direction:column;gap:5px'
 
-      // Dodaj wizytę
-      const meetBtn = document.createElement('button')
-      meetBtn.textContent = '🤝 Dodaj wizytę'
-      meetBtn.style.cssText = 'width:100%;padding:7px;border-radius:6px;border:none;background:#d4ff5c;color:#0d0e10;font-size:12px;font-weight:700;cursor:pointer'
-      meetBtn.onclick = () => { if (onAddMeeting) onAddMeeting(client); leafletMap.current?.closePopup() }
-      btnGroup.appendChild(meetBtn)
-
       // Wyznacz trasę
       if (client.address) {
         const routeBtn = document.createElement('button')
@@ -253,14 +251,22 @@ export default function ClientMap({ clients, onClientClick, onAddClient, onAddMe
         btnGroup.appendChild(routeBtn)
       }
 
-      const schedBtn2 = document.createElement('button')
-      schedBtn2.style.cssText = 'width:100%;padding:7px;border-radius:6px;border:1px solid #5caaff;background:rgba(92,170,255,0.1);color:#2a7adf;font-size:12px;font-weight:700;cursor:pointer'
-      schedBtn2.textContent = '📅 Zaplanuj wizytę'
-      schedBtn2.onclick = () => {
-        if (onScheduleVisit) onScheduleVisit(client)
-        leafletMap.current?.closePopup()
+      const planBtn = document.createElement('button')
+      const ipNow = planIds.includes(client.id)
+      planBtn.disabled = ipNow
+      planBtn.style.cssText = `width:100%;padding:7px;border-radius:6px;border:${ipNow?'1px solid #ccc':'1px solid #5caaff'};background:${ipNow?'#f5f5f5':'rgba(92,170,255,0.1)'};color:${ipNow?'#999':'#2a7adf'};font-size:12px;font-weight:700;cursor:${ipNow?'default':'pointer'}`
+      planBtn.textContent = ipNow ? '✓ W planie dnia' : '📅 Dodaj do planu dnia'
+      planBtn.onclick = async () => {
+        if (ipNow) return
+        const current = await getDayPlan()
+        const list = Array.isArray(current) ? current : []
+        if (!list.find(x => x.id === client.id)) {
+          await saveDayPlan([...list, client])
+          setPlanIds(prev => [...prev, client.id])
+          render(true)
+        }
       }
-      btnGroup.appendChild(schedBtn2)
+      btnGroup.appendChild(planBtn)
 
       // Szczegóły
       const detailBtn = document.createElement('button')
@@ -291,7 +297,7 @@ export default function ClientMap({ clients, onClientClick, onAddClient, onAddMe
       const icon = L.icon({ iconUrl: makeSVGIcon(color), iconSize: [28, 35], iconAnchor: [14, 35], popupAnchor: [0, -36] })
       if (markersRef.current[client.id]) map.removeLayer(markersRef.current[client.id])
       const marker = L.marker([lat, lng], { icon })
-      marker.bindPopup(() => buildPopup(client), { maxWidth: 260 })
+      marker.bindPopup(() => buildPopup(client, planIds), { maxWidth: 260 })
       if (stageFilter === 'all' || client.stage === stageFilter) marker.addTo(map)
       markersRef.current[client.id] = marker
     }
